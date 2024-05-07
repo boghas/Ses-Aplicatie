@@ -39,3 +39,15 @@ React:
 
 
 npx create-react-app ses-app
+
+cd /ses-app/
+npm start 
+
+
+npm install axios
+
+npm i react-data-table-component
+
+npm install json-server
+npm i react-router-dom
+npm start

@@ -56,6 +56,9 @@ async def shutdown():
 @app.get('/')
 async def get_all_clients():
     query = models.Client.__table__.select()
+    clients = {
+        'clients': database.fetch_all(query)
+    }
     return await database.fetch_all(query)
 
 @app.get('/client/{client_id}')
