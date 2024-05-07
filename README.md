@@ -35,3 +35,7 @@ DB_PORT=yout_db_port
 uvicorn main:app --reload
 
 
+React:
+
+
+npx create-react-app ses-app
