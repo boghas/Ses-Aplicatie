@@ -68,58 +68,91 @@ async def get_client_by_id(client_id: int):
     
             return client
 
-@app.put('/update_serie_inventor/{client_id}')
+@app.put('/upload_serie_inventor/{client_id}')
 async def update_serie_inventor(client_id: int, new_serie_inventor: str):
-    async with database.transaction():
-        with SessionLocal() as session:
-            # Retrieve the item by item_id
-            client = session.query(models.Client).filter(models.Client.client_id == client_id).first()
-            if not client:
-                raise HTTPException(status_code=404, detail="Client not found")
+    destination = Path(f'db/{client_id}/Serie_Inventor')
+    existing_files = [os.path.join(destination, f) for f in os.listdir(destination)]
+    if not os.path.exists(destination):
+        raise HTTPException(status_code=404, detail="Client not found")
+    destination_file_name = os.path.join(destination, new_serie_inventor.filename)
+    try:
+        with Path(destination_file_name).open("wb") as buffer:
+            shutil.copyfileobj(new_serie_inventor.file, buffer)
+        for f in existing_files:
+            if not os.path.basename(f) == new_serie_inventor.filename:
+                os.remove(f)
+        async with database.transaction():
+            with SessionLocal() as session:
+                # Retrieve the item by item_id
+                client = session.query(models.Client).filter(models.Client.client_id == client_id).first()
+                if not client:
+                    raise HTTPException(status_code=404, detail="Client not found")
 
-            # Update only if the value is provided
-            if new_serie_inventor:
-                client.serie_inventor = new_serie_inventor
+                client.documente_incarcate = destination_file_name
 
-            session.commit()
-            session.refresh(client)
-            return client
-
-
-@app.put('/update_serie_smart_meter/{client_id}')
-async def update_serie_smart_meter(client_id: int, new_serie_smart_meter: str):
-    async with database.transaction():
-        with SessionLocal() as session:
-            # Retrieve the item by item_id
-            client = session.query(models.Client).filter(models.Client.client_id == client_id).first()
-            if not client:
-                raise HTTPException(status_code=404, detail="Client not found")
-
-            # Update only if the value is provided
-            if new_serie_smart_meter:
-                client.serie_smart_meter = new_serie_smart_meter
-
-            session.commit()
-            session.refresh(client)
-            return client
+                session.commit()
+                session.refresh(client)
+    finally:
+        print('document_uploaded!')
+    return client
 
 
-@app.put('/update_serie_panouri/{client_id}')
-async def update_serie_panouri(client_id: int, new_serie_panouri: str):
-    async with database.transaction():
-        with SessionLocal() as session:
-            # Retrieve the item by item_id
-            client = session.query(models.Client).filter(models.Client.client_id == client_id).first()
-            if not client:
-                raise HTTPException(status_code=404, detail="Client not found")
+@app.put('/upload_serie_smart_meter/{client_id}')
+async def update_serie_smart_meter(client_id: int, new_serie_smart_meter: UploadFile):
+    destination = Path(f'db/{client_id}/Serie_Smart_Meter')
+    existing_files = [os.path.join(destination, f) for f in os.listdir(destination)]
+    if not os.path.exists(destination):
+        raise HTTPException(status_code=404, detail="Client not found")
+    destination_file_name = os.path.join(destination, new_serie_smart_meter.filename)
+    try:
+        with Path(destination_file_name).open("wb") as buffer:
+            shutil.copyfileobj(new_serie_smart_meter.file, buffer)
+        for f in existing_files:
+            if not os.path.basename(f) == new_serie_smart_meter.filename:
+                os.remove(f)
+        async with database.transaction():
+            with SessionLocal() as session:
+                # Retrieve the item by item_id
+                client = session.query(models.Client).filter(models.Client.client_id == client_id).first()
+                if not client:
+                    raise HTTPException(status_code=404, detail="Client not found")
 
-            # Update only if the value is provided
-            if new_serie_panouri:
-                client.serie_panouri = new_serie_panouri
+                client.documente_incarcate = destination_file_name
 
-            session.commit()
-            session.refresh(client)
-            return client
+                session.commit()
+                session.refresh(client)
+    finally:
+        print('document_uploaded!')
+    return client
+
+
+@app.put('/upload_serie_panouri/{client_id}')
+async def upload_and_update_serie_panouri(client_id: int, serie_panouri: UploadFile):
+    destination = Path(f'db/{client_id}/Serie_Panouri')
+    existing_files = [os.path.join(destination, f) for f in os.listdir(destination)]
+    if not os.path.exists(destination):
+        raise HTTPException(status_code=404, detail="Client not found")
+    destination_file_name = os.path.join(destination, serie_panouri.filename)
+    try:
+        with Path(destination_file_name).open("wb") as buffer:
+            shutil.copyfileobj(serie_panouri.file, buffer)
+        for f in existing_files:
+            if not os.path.basename(f) == serie_panouri.filename:
+                os.remove(f)
+        async with database.transaction():
+            with SessionLocal() as session:
+                # Retrieve the item by item_id
+                client = session.query(models.Client).filter(models.Client.client_id == client_id).first()
+                if not client:
+                    raise HTTPException(status_code=404, detail="Client not found")
+
+                client.documente_incarcate = destination_file_name
+
+                session.commit()
+                session.refresh(client)
+    finally:
+        print('document_uploaded!')
+    return client
 
 
 @app.put('/upload_documente_incarcate/{client_id}')
@@ -339,6 +372,57 @@ async def download_dosar_prosumator_by_id(client_id: int):
 async def download_garantii_client_by_id(client_id: int):
     db_id_path = os.path.join('db', str(client_id))
     document_path = os.path.join(db_id_path, 'Garantii_Client')
+    if not os.path.exists(document_path):
+        raise HTTPException(status_code=404, detail="Client not found")
+    try:
+        file_name = os.listdir(document_path)[0]
+    except:
+        file_name = None
+    if file_name is not None:
+        file_path = os.path.join(document_path, file_name)
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="File not found!")
+    return FileResponse(path=file_path, filename=os.path.basename(file_path))
+
+
+@app.get('/serie_inventor/{client_id}')
+async def download_garantii_client_by_id(client_id: int):
+    db_id_path = os.path.join('db', str(client_id))
+    document_path = os.path.join(db_id_path, 'Serie_Inventor')
+    if not os.path.exists(document_path):
+        raise HTTPException(status_code=404, detail="Client not found")
+    try:
+        file_name = os.listdir(document_path)[0]
+    except:
+        file_name = None
+    if file_name is not None:
+        file_path = os.path.join(document_path, file_name)
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="File not found!")
+    return FileResponse(path=file_path, filename=os.path.basename(file_path))
+
+
+@app.get('/serie_panouri/{client_id}')
+async def download_garantii_client_by_id(client_id: int):
+    db_id_path = os.path.join('db', str(client_id))
+    document_path = os.path.join(db_id_path, 'Serie_Panouri')
+    if not os.path.exists(document_path):
+        raise HTTPException(status_code=404, detail="Client not found")
+    try:
+        file_name = os.listdir(document_path)[0]
+    except:
+        file_name = None
+    if file_name is not None:
+        file_path = os.path.join(document_path, file_name)
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="File not found!")
+    return FileResponse(path=file_path, filename=os.path.basename(file_path))
+
+
+@app.get('/serie_smart_meter/{client_id}')
+async def download_garantii_client_by_id(client_id: int):
+    db_id_path = os.path.join('db', str(client_id))
+    document_path = os.path.join(db_id_path, 'Serie_Smart_Meter')
     if not os.path.exists(document_path):
         raise HTTPException(status_code=404, detail="Client not found")
     try:
