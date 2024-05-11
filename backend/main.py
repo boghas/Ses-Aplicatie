@@ -10,12 +10,14 @@ import asyncio
 import shutil
 from pathlib import Path
 from dotenv import load_dotenv
+from fastapi.responses import JSONResponse
+from fastapi.responses import StreamingResponse
 
 
 app = FastAPI()
 
 origins = [
-    "http://localhost:3000"  # Replace this with the actual origin of your frontend
+    "*"  # Replace this with the actual origin of your frontend
 ]
 
 app.add_middleware(
@@ -86,7 +88,6 @@ async def update_serie_inventor(client_id: int, new_serie_inventor: str):
         for f in existing_files:
             if not os.path.basename(f) == new_serie_inventor.filename:
                 os.remove(f)
-        '''
         async with database.transaction():
             with SessionLocal() as session:
                 # Retrieve the item by item_id
@@ -98,7 +99,6 @@ async def update_serie_inventor(client_id: int, new_serie_inventor: str):
 
                 session.commit()
                 session.refresh(client)
-        '''
     finally:
         print('document_uploaded!')
     return client
@@ -106,6 +106,7 @@ async def update_serie_inventor(client_id: int, new_serie_inventor: str):
 
 @app.put('/upload_serie_smart_meter/{client_id}')
 async def update_serie_smart_meter(client_id: int, new_serie_smart_meter: UploadFile):
+    print(client_id)
     destination = Path(f'db/{client_id}/Serie_Smart_Meter')
     existing_files = [os.path.join(destination, f) for f in os.listdir(destination)]
     if not os.path.exists(destination):
@@ -117,7 +118,6 @@ async def update_serie_smart_meter(client_id: int, new_serie_smart_meter: Upload
         for f in existing_files:
             if not os.path.basename(f) == new_serie_smart_meter.filename:
                 os.remove(f)
-        '''
         async with database.transaction():
             with SessionLocal() as session:
                 # Retrieve the item by item_id
@@ -129,10 +129,9 @@ async def update_serie_smart_meter(client_id: int, new_serie_smart_meter: Upload
 
                 session.commit()
                 session.refresh(client)
-        '''
     finally:
         print('document_uploaded!')
-    #return client
+    return client
 
 
 @app.post('/upload_serie_panouri/{client_id}')
@@ -313,6 +312,7 @@ async def upload_and_update_garantii_client(client_id: int, garantii: UploadFile
 
 @app.get('/documente_incarcate/{client_id}')
 async def download_documente_incarcate_by_id(client_id: int):
+    print('test')
     db_id_path = os.path.join('db', str(client_id))
     document_path = os.path.join(db_id_path, 'Documente_Incarcate')
     if not os.path.exists(document_path):
@@ -343,10 +343,13 @@ async def download_contract_anexa_by_id(client_id: int):
     if not os.path.exists(file_path):
         raise HTTPException(status_code=404, detail="File not found!")
     return FileResponse(path=file_path, filename=os.path.basename(file_path))
-    
+
+    # Return a StreamingResponse with the file content
+    return StreamingResponse(fp, headers={'Content-Disposition': f'attachment; filename={file_name}'})
 
 @app.get('/factura_avans/{client_id}')
 async def download_factura_avans_by_id(client_id: int):
+    print('test')
     db_id_path = os.path.join('db', str(client_id))
     document_path = os.path.join(db_id_path, 'Factura_Avans')
     if not os.path.exists(document_path):
@@ -397,7 +400,7 @@ async def download_garantii_client_by_id(client_id: int):
 
 
 @app.get('/serie_inventor/{client_id}')
-async def download_garantii_client_by_id(client_id: int):
+async def download_serie_inventor_by_id(client_id: int):
     db_id_path = os.path.join('db', str(client_id))
     document_path = os.path.join(db_id_path, 'Serie_Inventor')
     if not os.path.exists(document_path):
@@ -414,7 +417,7 @@ async def download_garantii_client_by_id(client_id: int):
 
 
 @app.get('/serie_panouri/{client_id}')
-async def download_garantii_client_by_id(client_id: int):
+async def download_serie_panouri_by_id(client_id: int):
     db_id_path = os.path.join('db', str(client_id))
     document_path = os.path.join(db_id_path, 'Serie_Panouri')
     if not os.path.exists(document_path):
@@ -431,7 +434,7 @@ async def download_garantii_client_by_id(client_id: int):
 
 
 @app.get('/serie_smart_meter/{client_id}')
-async def download_garantii_client_by_id(client_id: int):
+async def downloadserie_smart_meter_by_id(client_id: int):
     db_id_path = os.path.join('db', str(client_id))
     document_path = os.path.join(db_id_path, 'Serie_Smart_Meter')
     if not os.path.exists(document_path):
