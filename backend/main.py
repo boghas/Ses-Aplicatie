@@ -14,7 +14,9 @@ from dotenv import load_dotenv
 
 app = FastAPI()
 
-origins = ["*"]
+origins = [
+    "http://localhost:3000"  # Replace this with the actual origin of your frontend
+]
 
 app.add_middleware(
     CORSMiddleware,
@@ -84,6 +86,7 @@ async def update_serie_inventor(client_id: int, new_serie_inventor: str):
         for f in existing_files:
             if not os.path.basename(f) == new_serie_inventor.filename:
                 os.remove(f)
+        '''
         async with database.transaction():
             with SessionLocal() as session:
                 # Retrieve the item by item_id
@@ -95,6 +98,7 @@ async def update_serie_inventor(client_id: int, new_serie_inventor: str):
 
                 session.commit()
                 session.refresh(client)
+        '''
     finally:
         print('document_uploaded!')
     return client
@@ -113,6 +117,7 @@ async def update_serie_smart_meter(client_id: int, new_serie_smart_meter: Upload
         for f in existing_files:
             if not os.path.basename(f) == new_serie_smart_meter.filename:
                 os.remove(f)
+        '''
         async with database.transaction():
             with SessionLocal() as session:
                 # Retrieve the item by item_id
@@ -124,12 +129,13 @@ async def update_serie_smart_meter(client_id: int, new_serie_smart_meter: Upload
 
                 session.commit()
                 session.refresh(client)
+        '''
     finally:
         print('document_uploaded!')
-    return client
+    #return client
 
 
-@app.put('/upload_serie_panouri/{client_id}')
+@app.post('/upload_serie_panouri/{client_id}')
 async def upload_and_update_serie_panouri(client_id: int, serie_panouri: UploadFile):
     destination = Path(f'db/{client_id}/Serie_Panouri')
     existing_files = [os.path.join(destination, f) for f in os.listdir(destination)]
@@ -192,8 +198,10 @@ async def upload_and_update_contract_anexa(client_id: int, contract: UploadFile)
     destination = os.path.join(os.path.join('db', str(client_id)), 'Contract_Anexa')
     existing_files = [os.path.join(destination, f) for f in os.listdir(destination)]
     if not os.path.exists(destination):
+        print('this')
         raise HTTPException(status_code=404, detail="Client not found")
     destination_file_name = os.path.join(destination, contract.filename)
+    print('nah')
     try:
         with Path(destination_file_name).open("wb") as buffer:
             shutil.copyfileobj(contract.file, buffer)
