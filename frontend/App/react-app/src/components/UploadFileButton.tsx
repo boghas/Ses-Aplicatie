@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 
-const UploadButton = ({ client_id: number, endpoint: string }) => {
+const UploadButton = ({ client_id, endpoint, file_type}) => {
   const [selectedFile, setSelectedFile] = useState(null);
 
   const handleFileChange = (e) => {
@@ -12,10 +12,10 @@ const UploadButton = ({ client_id: number, endpoint: string }) => {
     if (!selectedFile) return;
 
     const formData = new FormData();
-    formData.append('new_serie_smart_meter', selectedFile);
+    formData.append(file_type, selectedFile);
 
     try {
-      const response = await axios.put(`http://localhost:8000/${endpoint}/${client_id}`, formData, {
+        const response = await axios.put(`http://localhost:8000/${endpoint}/${client_id}`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },

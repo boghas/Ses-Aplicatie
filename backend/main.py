@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException,  File, UploadFile, Response
+from fastapi import FastAPI, HTTPException,  File, UploadFile, Response, status, Form
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy import create_engine, text
 from databases import Database
@@ -12,6 +12,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from fastapi.responses import JSONResponse
 from fastapi.responses import StreamingResponse
+from typing import Optional
 
 
 app = FastAPI()
@@ -75,8 +76,52 @@ async def get_client_by_id(client_id: int):
     
             return client
 
+def create_user_folders(client_id):
+    os.mkdir(f'./db/{client_id}')
+    os.mkdir(f'./db/{client_id}/Contract_Anexa')
+    os.mkdir(f'./db/{client_id}/Documente_Incarcate')
+    os.mkdir(f'./db/{client_id}/Dosar_Prosumator')
+    os.mkdir(f'./db/{client_id}/Factura_Avans')
+    os.mkdir(f'./db/{client_id}/Garantii_Client')
+    os.mkdir(f'./db/{client_id}/Serie_Inventor')
+    os.mkdir(f'./db/{client_id}/Serie_Panouri')
+    os.mkdir(f'./db/{client_id}/Serie_Smart_Meter')
+    print('folders created')
+
+@app.post('/client/create_client/{client_name}', status_code=status.HTTP_201_CREATED)
+async def create_new_client(client_name: str):
+    new_client = models.Client(
+        client_name=client_name,
+        documente_incarcate="NEINCARCAT",
+        contract_anexa="NEINCARCAT", 
+        factura_avans="NEINCARCAT", 
+        serie_inventor="NEINCARCAT", 
+        serie_smart_meter="NEINCARCAT", 
+        serie_panouri="NEINCARCAT", 
+        dosar_prosumator="NEINCARCAT", 
+        garantii_client="NEINCARCAT"
+        )
+    print('inserting into database')
+    async with database.transaction():
+            with SessionLocal() as session:
+                try:
+                    session.add(new_client)
+                    print('Client creat')
+                except:
+                    print('Failed to create user')
+                
+                session.commit()
+                session.refresh(new_client)
+            
+            create_user_folders(new_client.client_id)
+    
+    return {"client_id": new_client.client_id, "client_name": new_client.client_name}
+
+
 @app.put('/upload_serie_inventor/{client_id}')
-async def update_serie_inventor(client_id: int, new_serie_inventor: str):
+async def update_serie_inventor(client_id: int, new_serie_inventor: UploadFile):
+    print('test')
+    print(new_serie_inventor.filename)
     destination = Path(f'db/{client_id}/Serie_Inventor')
     existing_files = [os.path.join(destination, f) for f in os.listdir(destination)]
     if not os.path.exists(destination):
@@ -95,7 +140,7 @@ async def update_serie_inventor(client_id: int, new_serie_inventor: str):
                 if not client:
                     raise HTTPException(status_code=404, detail="Client not found")
 
-                client.documente_incarcate = destination_file_name
+                client.serie_inventor = "INCARCAT"
 
                 session.commit()
                 session.refresh(client)
@@ -106,7 +151,6 @@ async def update_serie_inventor(client_id: int, new_serie_inventor: str):
 
 @app.put('/upload_serie_smart_meter/{client_id}')
 async def update_serie_smart_meter(client_id: int, new_serie_smart_meter: UploadFile):
-    print(client_id)
     destination = Path(f'db/{client_id}/Serie_Smart_Meter')
     existing_files = [os.path.join(destination, f) for f in os.listdir(destination)]
     if not os.path.exists(destination):
@@ -125,7 +169,7 @@ async def update_serie_smart_meter(client_id: int, new_serie_smart_meter: Upload
                 if not client:
                     raise HTTPException(status_code=404, detail="Client not found")
 
-                client.documente_incarcate = destination_file_name
+                client.serie_smart_meter = "INCARCAT"
 
                 session.commit()
                 session.refresh(client)
@@ -134,7 +178,7 @@ async def update_serie_smart_meter(client_id: int, new_serie_smart_meter: Upload
     return client
 
 
-@app.post('/upload_serie_panouri/{client_id}')
+@app.put('/upload_serie_panouri/{client_id}')
 async def upload_and_update_serie_panouri(client_id: int, serie_panouri: UploadFile):
     destination = Path(f'db/{client_id}/Serie_Panouri')
     existing_files = [os.path.join(destination, f) for f in os.listdir(destination)]
@@ -154,7 +198,7 @@ async def upload_and_update_serie_panouri(client_id: int, serie_panouri: UploadF
                 if not client:
                     raise HTTPException(status_code=404, detail="Client not found")
 
-                client.documente_incarcate = destination_file_name
+                client.serie_panouri = "INCARCAT"
 
                 session.commit()
                 session.refresh(client)
@@ -183,7 +227,7 @@ async def upload_and_update_documente_incarcate(client_id: int, document: Upload
                 if not client:
                     raise HTTPException(status_code=404, detail="Client not found")
 
-                client.documente_incarcate = destination_file_name
+                client.documente_incarcate = "INCARCAT"
 
                 session.commit()
                 session.refresh(client)
@@ -214,7 +258,7 @@ async def upload_and_update_contract_anexa(client_id: int, contract: UploadFile)
                 if not client:
                     raise HTTPException(status_code=404, detail="Client not found")
 
-                client.contract_anexa = destination_file_name
+                client.contract_anexa = "INCARCAT"
 
                 session.commit()
                 session.refresh(client)
@@ -243,7 +287,7 @@ async def upload_and_update_factura_avans(client_id: int, factura: UploadFile):
                 if not client:
                     raise HTTPException(status_code=404, detail="Client not found")
 
-                client.factura_avans = destination_file_name
+                client.factura_avans = "INCARCAT"
 
                 session.commit()
                 session.refresh(client)
@@ -272,8 +316,7 @@ async def upload_and_update_dosar_prosumator(client_id: int, dosar: UploadFile):
                 if not client:
                     raise HTTPException(status_code=404, detail="Client not found")
 
-                client.dosar_prosumator = destination_file_name
-
+                client.dosar_prosumator = "INCARCAT"
                 session.commit()
                 session.refresh(client)
     finally:
@@ -283,6 +326,10 @@ async def upload_and_update_dosar_prosumator(client_id: int, dosar: UploadFile):
 
 @app.put('/upload_garantii_client/{client_id}')
 async def upload_and_update_garantii_client(client_id: int, garantii: UploadFile):
+    try:
+        print('here')
+    except Exception as e:
+        print(e)
     destination = os.path.join(os.path.join('db', str(client_id)), 'Garantii_Client')
     existing_files = [os.path.join(destination, f) for f in os.listdir(destination)]
     if not os.path.exists(destination):
@@ -301,13 +348,13 @@ async def upload_and_update_garantii_client(client_id: int, garantii: UploadFile
                 if not client:
                     raise HTTPException(status_code=404, detail="Client not found")
 
-                client.garantii_client = destination_file_name
+                client.garantii_client = "INCARCAT"
 
                 session.commit()
                 session.refresh(client)
     finally:
         print('document_uploaded!')
-    return client
+    #return client
 
 
 @app.get('/documente_incarcate/{client_id}')
@@ -344,8 +391,6 @@ async def download_contract_anexa_by_id(client_id: int):
         raise HTTPException(status_code=404, detail="File not found!")
     return FileResponse(path=file_path, filename=os.path.basename(file_path))
 
-    # Return a StreamingResponse with the file content
-    return StreamingResponse(fp, headers={'Content-Disposition': f'attachment; filename={file_name}'})
 
 @app.get('/factura_avans/{client_id}')
 async def download_factura_avans_by_id(client_id: int):
