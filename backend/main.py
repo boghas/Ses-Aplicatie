@@ -115,16 +115,21 @@ async def get_client_by_id(client_id: int):
             return client
 
 def create_user_folders(client_id):
-    os.mkdir(f'./db/{client_id}')
-    os.mkdir(f'./db/{client_id}/Contract_Anexa')
-    os.mkdir(f'./db/{client_id}/Documente_Incarcate')
-    os.mkdir(f'./db/{client_id}/Dosar_Prosumator')
-    os.mkdir(f'./db/{client_id}/Factura_Avans')
-    os.mkdir(f'./db/{client_id}/Garantii_Client')
-    os.mkdir(f'./db/{client_id}/Serie_Inventor')
-    os.mkdir(f'./db/{client_id}/Serie_Panouri')
-    os.mkdir(f'./db/{client_id}/Serie_Smart_Meter')
-    print('folders created')
+    try:
+        os.mkdir(f'./db/{client_id}')
+        os.mkdir(f'./db/{client_id}/Contract_Anexa')
+        os.mkdir(f'./db/{client_id}/Documente_Incarcate')
+        os.mkdir(f'./db/{client_id}/Dosar_Prosumator')
+        os.mkdir(f'./db/{client_id}/Factura_Avans')
+        os.mkdir(f'./db/{client_id}/Garantii_Client')
+        os.mkdir(f'./db/{client_id}/Serie_Inventor')
+        os.mkdir(f'./db/{client_id}/Serie_Panouri')
+        os.mkdir(f'./db/{client_id}/Serie_Smart_Meter')
+        print('folders created')
+    except:
+        print('Folders already exists!')
+        os.remove(f'./db/{client_id}')
+        create_user_folders(client_id)
 
 @app.post('/client/create_client/{client_name}', status_code=status.HTTP_201_CREATED)
 async def create_new_client(client_name: str):
@@ -137,7 +142,15 @@ async def create_new_client(client_name: str):
         serie_smart_meter="NEINCARCAT", 
         serie_panouri="NEINCARCAT", 
         dosar_prosumator="NEINCARCAT", 
-        garantii_client="NEINCARCAT"
+        garantii_client="NEINCARCAT",
+        documente_incarcate_nume_fisier="",
+        contract_anexa_nume_fisier="",
+        factura_avans_nume_fisier="",
+        serie_inventor_nume_fisier="",
+        serie_smart_meter_nume_fisier="",
+        serie_panouri_nume_fisier="",
+        dosar_prosumator_nume_fisier="",
+        garantii_client_nume_fisier=""
         )
     print('inserting into database')
     async with database.transaction():
@@ -179,6 +192,7 @@ async def update_serie_inventor(client_id: int, new_serie_inventor: UploadFile):
                     raise HTTPException(status_code=404, detail="Client not found")
 
                 client.serie_inventor = "INCARCAT"
+                client.serie_inventor_nume_fisier = new_serie_inventor.filename
 
                 session.commit()
                 session.refresh(client)
@@ -208,6 +222,7 @@ async def update_serie_smart_meter(client_id: int, new_serie_smart_meter: Upload
                     raise HTTPException(status_code=404, detail="Client not found")
 
                 client.serie_smart_meter = "INCARCAT"
+                client.serie_smart_meter_nume_fisier = new_serie_smart_meter.filename
 
                 session.commit()
                 session.refresh(client)
@@ -237,6 +252,7 @@ async def upload_and_update_serie_panouri(client_id: int, serie_panouri: UploadF
                     raise HTTPException(status_code=404, detail="Client not found")
 
                 client.serie_panouri = "INCARCAT"
+                client.serie_panouri_nume_fisier = serie_panouri.filename
 
                 session.commit()
                 session.refresh(client)
@@ -266,6 +282,7 @@ async def upload_and_update_documente_incarcate(client_id: int, document: Upload
                     raise HTTPException(status_code=404, detail="Client not found")
 
                 client.documente_incarcate = "INCARCAT"
+                client.documente_incarcate_nume_fisier = document.filename
 
                 session.commit()
                 session.refresh(client)
@@ -275,19 +292,19 @@ async def upload_and_update_documente_incarcate(client_id: int, document: Upload
 
 
 @app.put('/upload_contract_anexa/{client_id}')
-async def upload_and_update_contract_anexa(client_id: int, contract: UploadFile):
+async def upload_and_update_contract_anexa(client_id: int, contract_anexa: UploadFile):
     destination = os.path.join(os.path.join('db', str(client_id)), 'Contract_Anexa')
     existing_files = [os.path.join(destination, f) for f in os.listdir(destination)]
     if not os.path.exists(destination):
         print('this')
         raise HTTPException(status_code=404, detail="Client not found")
-    destination_file_name = os.path.join(destination, contract.filename)
+    destination_file_name = os.path.join(destination, contract_anexa.filename)
     print('nah')
     try:
         with Path(destination_file_name).open("wb") as buffer:
-            shutil.copyfileobj(contract.file, buffer)
+            shutil.copyfileobj(contract_anexa.file, buffer)
         for f in existing_files:
-            if not os.path.basename(f) == contract.filename:
+            if not os.path.basename(f) == contract_anexa.filename:
                 os.remove(f)
         async with database.transaction():
             with SessionLocal() as session:
@@ -297,6 +314,7 @@ async def upload_and_update_contract_anexa(client_id: int, contract: UploadFile)
                     raise HTTPException(status_code=404, detail="Client not found")
 
                 client.contract_anexa = "INCARCAT"
+                client.contract_anexa_nume_fisier = contract_anexa.filename
 
                 session.commit()
                 session.refresh(client)
@@ -326,6 +344,7 @@ async def upload_and_update_factura_avans(client_id: int, factura: UploadFile):
                     raise HTTPException(status_code=404, detail="Client not found")
 
                 client.factura_avans = "INCARCAT"
+                client.factura_avans = factura.filename
 
                 session.commit()
                 session.refresh(client)
@@ -355,6 +374,8 @@ async def upload_and_update_dosar_prosumator(client_id: int, dosar: UploadFile):
                     raise HTTPException(status_code=404, detail="Client not found")
 
                 client.dosar_prosumator = "INCARCAT"
+                client.dosar_prosumator = dosar.filename
+
                 session.commit()
                 session.refresh(client)
     finally:
@@ -387,6 +408,7 @@ async def upload_and_update_garantii_client(client_id: int, garantii: UploadFile
                     raise HTTPException(status_code=404, detail="Client not found")
 
                 client.garantii_client = "INCARCAT"
+                client.garantii_client = garantii.filename
 
                 session.commit()
                 session.refresh(client)

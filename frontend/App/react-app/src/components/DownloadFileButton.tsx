@@ -4,9 +4,10 @@ import axios from 'axios';
 interface DownloadFileButtonProps {
   client_id: number;
   endpoint: string;
+  file_name: string;
 }
 
-const DownloadFileButton: React.FC<DownloadFileButtonProps> = ({ client_id, endpoint, filename }) => {
+const DownloadFileButton: React.FC<DownloadFileButtonProps> = ({ client_id, endpoint, file_name }) => {
   const handleDownload = () => {
     console.log("Download button clicked"); // Add this line
 
@@ -14,7 +15,7 @@ const DownloadFileButton: React.FC<DownloadFileButtonProps> = ({ client_id, endp
       responseType: 'blob',
     })
     .then(response => {
-      let filename = `file_${client_id}.pdf`; // Default filename if not found
+      let filename = `${file_name}`; // Default filename if not found
       console.log(response)
 
       // Extract filename from content-disposition header

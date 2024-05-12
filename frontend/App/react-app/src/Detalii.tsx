@@ -15,6 +15,14 @@ interface ClientData {
   serie_panouri: string;
   dosar_prosumator: string;
   garantii_client: string;
+  documente_incarcate_nume_fisier: string;
+  contract_anexa_nume_fisier: string;
+  factura_avans_nume_fisier: string;
+  serie_inventor_nume_fisier: string;
+  serie_smart_meter_nume_fisier: string;
+  serie_panouri_nume_fisier: string;
+  dosar_prosumator_nume_fisier: string;
+  garantii_client_nume_fisier: string;
 }
 
 const Detalii: React.FC = () => {
@@ -28,7 +36,15 @@ const Detalii: React.FC = () => {
     serie_smart_meter: "",
     serie_panouri: "",
     dosar_prosumator: "",
-    garantii_client: ""
+    garantii_client: "",
+    documente_incarcate_nume_fisier: "",
+    contract_anexa_nume_fisier: "",
+    factura_avans_nume_fisier: "",
+    serie_inventor_nume_fisier: "",
+    serie_smart_meter_nume_fisier: "",
+    serie_panouri_nume_fisier: "",
+    dosar_prosumator_nume_fisier: "",
+    garantii_client_nume_fisier: ""
   });
   const { client_id } = useParams<{ client_id: string }>();
 
@@ -57,43 +73,43 @@ const Detalii: React.FC = () => {
           </tr>
           <tr>
             <td>Documente Incarcate: {data.documente_incarcate}</td>
-            <td><UploadFileButton client_id={data.client_id} endpoint={"upload_documente_incarcate"} file_type={"document"}/></td>
-            <td><DownloadFileButton client_id={data.client_id} endpoint="documente_incarcate" filename={data.client_id + "." + data.client_name + "_documente"}/></td>
+            <td><UploadFileButton client_id={data.client_id} endpoint={"upload_documente_incarcate"} file_type={"document"} /></td>
+            <td><DownloadFileButton client_id={data.client_id} endpoint="documente_incarcate" file_name={data.documente_incarcate_nume_fisier} /></td>
           </tr>
           <tr>
             <td>Contract Anexa: {data.contract_anexa}</td>
-            <td><UploadFileButton client_id={data.client_id} endpoint={"upload_contract_anexa"} file_type={"contract"}/></td>
-            <td><DownloadFileButton client_id={data.client_id} endpoint="contract_anexa" /></td>
+            <td><UploadFileButton client_id={data.client_id} endpoint={"upload_contract_anexa"} file_type={"contract_anexa"} /></td>
+            <td><DownloadFileButton client_id={data.client_id} endpoint="contract_anexa" file_name={data.contract_anexa_nume_fisier} /></td>
           </tr>
           <tr>
             <td>Factura Avans: {data.factura_avans}</td>
             <td><UploadFileButton client_id={data.client_id} endpoint={"upload_factura_avans"} file_type={"factura"} /></td>
-            <td><DownloadFileButton client_id={data.client_id} endpoint="factura_avans" /></td>
+            <td><DownloadFileButton client_id={data.client_id} endpoint="factura_avans" file_name={data.factura_avans_nume_fisier} /></td>
           </tr>
           <tr>
             <td>Serie Inventor: {data.serie_inventor}</td>
-            <td><UploadFileButton client_id={data.client_id} endpoint={"upload_serie_inventor"} file_type={"new_serie_inventor"}/></td>
-            <td><DownloadFileButton client_id={data.client_id} endpoint="serie_inventor" /></td>
+            <td><UploadFileButton client_id={data.client_id} endpoint={"upload_serie_inventor"} file_type={"new_serie_inventor"} /></td>
+            <td><DownloadFileButton client_id={data.client_id} endpoint="serie_inventor" file_name={data.serie_inventor_nume_fisier} /></td>
           </tr>
           <tr>
             <td>Serie Smart Meter: {data.serie_smart_meter}</td>
             <td><UploadFileButton client_id={data.client_id} endpoint={"upload_serie_smart_meter"} file_type={"new_serie_smart_meter"}/></td>
-            <td><DownloadFileButton client_id={data.client_id} endpoint="serie_smart_meter" /></td>
+            <td><DownloadFileButton client_id={data.client_id} endpoint="serie_smart_meter" file_name={data.serie_smart_meter_nume_fisier} /></td>
           </tr>
           <tr>
             <td>Serie Panouri: {data.serie_panouri}</td>
             <td><UploadFileButton client_id={data.client_id} endpoint={"upload_serie_panouri"} file_type={"serie_panouri"} /></td>
-            <td><DownloadFileButton client_id={data.client_id} endpoint="serie_panouri" /></td>
+            <td><DownloadFileButton client_id={data.client_id} endpoint="serie_panouri" file_name={data.serie_panouri_nume_fisier} /></td>
           </tr>
           <tr>
             <td>Dosar Prosumator: {data.dosar_prosumator}</td>
             <td><UploadFileButton client_id={data.client_id} endpoint={"upload_dosar_prosumator"} file_type={"dosar"} /></td>
-            <td><DownloadFileButton client_id={data.client_id} endpoint="dosar_prosumator" /></td>
+            <td><DownloadFileButton client_id={data.client_id} endpoint="dosar_prosumator"  file_name={data.dosar_prosumator_nume_fisier} /></td>
           </tr>
           <tr>
             <td>Garantii Client: {data.garantii_client}</td>
             <td><UploadFileButton client_id={data.client_id} endpoint={"upload_garantii_client"} file_type={"garantii"}/></td>
-            <td><DownloadFileButton client_id={data.client_id} endpoint="garantii_client" /></td>
+            <td><DownloadFileButton client_id={data.client_id} endpoint="garantii_client" file_name={data.garantii_client_nume_fisier}/></td>
           </tr>
         </tbody>
       </table>

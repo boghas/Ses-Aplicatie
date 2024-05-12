@@ -26,6 +26,14 @@ class Client(Base):
     serie_panouri = Column(String)
     dosar_prosumator = Column(String)
     garantii_client = Column(String)
+    documente_incarcate_nume_fisier = Column(String)
+    contract_anexa_nume_fisier = Column(String)
+    factura_avans_nume_fisier = Column(String)
+    serie_inventor_nume_fisier = Column(String)
+    serie_smart_meter_nume_fisier = Column(String)
+    serie_panouri_nume_fisier = Column(String)
+    dosar_prosumator_nume_fisier = Column(String)
+    garantii_client_nume_fisier = Column(String)
 
 
 SECRET_KEY = "87be37f7ddd5225e7d65ee0ede15732a3fafa329563be70af994b64bd94173c5"
