@@ -34,6 +34,8 @@
 7.  Run the server. From the /backend direcory run:
     uvicorn main:app --reload
 
+openssl rand -hex 32
+
 React:
 
 create new vite project

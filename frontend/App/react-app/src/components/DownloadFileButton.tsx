@@ -6,7 +6,7 @@ interface DownloadFileButtonProps {
   endpoint: string;
 }
 
-const DownloadFileButton: React.FC<DownloadFileButtonProps> = ({ client_id, endpoint }) => {
+const DownloadFileButton: React.FC<DownloadFileButtonProps> = ({ client_id, endpoint, filename }) => {
   const handleDownload = () => {
     console.log("Download button clicked"); // Add this line
 
@@ -19,6 +19,7 @@ const DownloadFileButton: React.FC<DownloadFileButtonProps> = ({ client_id, endp
 
       // Extract filename from content-disposition header
       const contentDisposition = response.headers['content-disposition'];
+      console.log(contentDisposition)
       if (contentDisposition) {
         const matches = contentDisposition.match(/filename="(.+)"/);
         if (matches && matches.length > 1) {

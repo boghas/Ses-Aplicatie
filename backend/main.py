@@ -1,18 +1,19 @@
-from fastapi import FastAPI, HTTPException,  File, UploadFile, Response, status, Form
+from fastapi import FastAPI, HTTPException,  File, UploadFile, status, Form, Depends
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy import create_engine, text
 from databases import Database
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from starlette.responses import FileResponse
 import models
 import os
-import asyncio
 import shutil
 from pathlib import Path
 from dotenv import load_dotenv
-from fastapi.responses import JSONResponse
-from fastapi.responses import StreamingResponse
-from typing import Optional
+from typing import Annotated
+from datetime import datetime, timedelta, timezone
+from passlib.context import CryptContext
+from jose import JWTError, jwt
 
 
 app = FastAPI()
@@ -26,7 +27,7 @@ app.add_middleware(
     allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*"],
+    allow_headers=["Authorization"],
 )
 
 load_dotenv()
@@ -56,6 +57,43 @@ async def startup():
 @app.on_event("shutdown")
 async def shutdown():
     await database.disconnect()
+
+
+@app.post("/token")
+async def login_for_access_token(
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+) -> models.Token:
+    user = models.authenticate_user(models.fake_users_db, form_data.username, form_data.password)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    print(user)
+    access_token_expires = timedelta(minutes=models.ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = models.create_access_token(
+        data={"sub": user.username}, expires_delta=access_token_expires
+    )
+    return models.Token(access_token=access_token, token_type="bearer")
+
+
+@app.get("/users/me/", response_model=models.User)
+async def read_users_me(
+    current_user: Annotated[models.User, Depends(models.get_current_active_user)],
+):
+    return current_user
+
+
+@app.get("/users/me/items/")
+async def read_own_items(
+    current_user: Annotated[models.User, Depends(models.get_current_active_user)],
+):
+    return [{"item_id": "Foo", "owner": current_user.username}]
+
+@app.get('/test')
+async def do_test(current_user: Annotated[models.User, Depends(models.get_current_user)]):
+    return current_user
 
 
 @app.get('/')

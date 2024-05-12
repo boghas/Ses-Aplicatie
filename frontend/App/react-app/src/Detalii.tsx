@@ -58,7 +58,7 @@ const Detalii: React.FC = () => {
           <tr>
             <td>Documente Incarcate: {data.documente_incarcate}</td>
             <td><UploadFileButton client_id={data.client_id} endpoint={"upload_documente_incarcate"} file_type={"document"}/></td>
-            <td><DownloadFileButton client_id={data.client_id} endpoint="documente_incarcate" /></td>
+            <td><DownloadFileButton client_id={data.client_id} endpoint="documente_incarcate" filename={data.client_id + "." + data.client_name + "_documente"}/></td>
           </tr>
           <tr>
             <td>Contract Anexa: {data.contract_anexa}</td>
