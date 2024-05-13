@@ -1,5 +1,6 @@
 import React from "react";
 import axios from 'axios';
+import api from "../api";
 
 interface DownloadFileButtonProps {
   client_id: number;
@@ -11,7 +12,7 @@ const DownloadFileButton: React.FC<DownloadFileButtonProps> = ({ client_id, endp
   const handleDownload = () => {
     console.log("Download button clicked"); // Add this line
 
-    axios.get(`http://localhost:8000/${endpoint}/${client_id}`, {
+    api.get(`http://localhost:8000/${endpoint}/${client_id}`, {
       responseType: 'blob',
     })
     .then(response => {

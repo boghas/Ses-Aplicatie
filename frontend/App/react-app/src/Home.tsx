@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from 'axios';
+import api from "./api";
 
 interface ClientData {
   client_id: number;
@@ -10,7 +11,7 @@ const Home: React.FC = () => {
   const [data, setData] = useState<ClientData[]>([]);
 
   useEffect(()=> {
-    axios.get<ClientData[]>('http://localhost:8000/')
+    api.get<ClientData[]>('http://localhost:8000/')
       .then(res => setData(res.data))
       .catch(err => console.log(err));
   }, []);

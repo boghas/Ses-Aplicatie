@@ -55,4 +55,5 @@ npm i react-data-table-component
 npm install json-server
 npm i react-router-dom
 npm i file-saver
+npm i jwt-decode
 npm start

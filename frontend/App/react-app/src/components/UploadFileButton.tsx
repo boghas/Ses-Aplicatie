@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import api from '../api';
 
 const UploadButton = ({ client_id, endpoint, file_type}) => {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -15,7 +16,7 @@ const UploadButton = ({ client_id, endpoint, file_type}) => {
     formData.append(file_type, selectedFile);
 
     try {
-        const response = await axios.put(`http://localhost:8000/${endpoint}/${client_id}`, formData, {
+        const response = await api.put(`http://localhost:8000/${endpoint}/${client_id}`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },

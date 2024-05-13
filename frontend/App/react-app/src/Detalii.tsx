@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useParams } from 'react-router-dom';
 import DownloadFileButton from "./components/DownloadFileButton";
 import UploadFileButton from "./components/UploadFileButton";
+import api from "./api";
 
 interface ClientData {
   client_id: number;
@@ -49,7 +50,7 @@ const Detalii: React.FC = () => {
   const { client_id } = useParams<{ client_id: string }>();
 
   useEffect(()=> {
-    axios.get<ClientData>(`http://localhost:8000/client/${client_id}`)
+    api.get<ClientData>(`http://localhost:8000/client/${client_id}`)
       .then(res => setData(res.data))
       .catch(err => console.log(err));
   }, [client_id]);

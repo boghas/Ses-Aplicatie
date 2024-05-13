@@ -6,7 +6,7 @@ class DownloadFileButton extends React.Component {
     downloadFile = async () => {
         try {
             const { client_id, endpoint } = this.props;
-            const response = await axios.get(`http://localhost:8000/${endpoint}/${client_id}`, {
+            const response = await api.get(`http://localhost:8000/${endpoint}/${client_id}`, {
                 responseType: 'blob',
                 headers: {
                     'Access-Control-Allow-Origin': '*',
