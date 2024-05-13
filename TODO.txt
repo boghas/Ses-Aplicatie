@@ -1,6 +1,3 @@
 
-- add multiple file upload
-- test archives on phone
-- ? retrive zip file
-- prettify it
+
 - deployment
