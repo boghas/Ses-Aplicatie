@@ -1,4 +1,4 @@
-- add authentication
+
 - add multiple file upload
 - test archives on phone
 - ? retrive zip file

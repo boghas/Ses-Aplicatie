@@ -15,14 +15,16 @@ interface ClientData {
   serie_smart_meter: string;
   serie_panouri: string;
   dosar_prosumator: string;
+  certificat_racordare: string;
   garantii_client: string;
   documente_incarcate_nume_fisier: string;
-  contract_anexa_nume_fisier: string;
+  contract_si_anexa_nume_fisier: string;
   factura_avans_nume_fisier: string;
   serie_inventor_nume_fisier: string;
   serie_smart_meter_nume_fisier: string;
   serie_panouri_nume_fisier: string;
   dosar_prosumator_nume_fisier: string;
+  certificat_racordare_nume_fisier: string;
   garantii_client_nume_fisier: string;
 }
 
@@ -37,14 +39,16 @@ const Detalii: React.FC = () => {
     serie_smart_meter: "",
     serie_panouri: "",
     dosar_prosumator: "",
+    certificat_racordare: "",
     garantii_client: "",
     documente_incarcate_nume_fisier: "",
-    contract_anexa_nume_fisier: "",
+    contract_si_anexa_nume_fisier: "",
     factura_avans_nume_fisier: "",
     serie_inventor_nume_fisier: "",
     serie_smart_meter_nume_fisier: "",
     serie_panouri_nume_fisier: "",
     dosar_prosumator_nume_fisier: "",
+    certificat_racordare_nume_fisier: "",
     garantii_client_nume_fisier: ""
   });
   const { client_id } = useParams<{ client_id: string }>();
@@ -80,7 +84,7 @@ const Detalii: React.FC = () => {
           <tr>
             <td>Contract Anexa: {data.contract_anexa}</td>
             <td><UploadFileButton client_id={data.client_id} endpoint={"upload_contract_anexa"} file_type={"contract_anexa"} /></td>
-            <td><DownloadFileButton client_id={data.client_id} endpoint="contract_anexa" file_name={data.contract_anexa_nume_fisier} /></td>
+            <td><DownloadFileButton client_id={data.client_id} endpoint="contract_anexa" file_name={data.contract_si_anexa_nume_fisier} /></td>
           </tr>
           <tr>
             <td>Factura Avans: {data.factura_avans}</td>
@@ -108,6 +112,11 @@ const Detalii: React.FC = () => {
             <td><DownloadFileButton client_id={data.client_id} endpoint="dosar_prosumator"  file_name={data.dosar_prosumator_nume_fisier} /></td>
           </tr>
           <tr>
+            <td>Certificat Racordare: {data.certificat_racordare}</td>
+            <td><UploadFileButton client_id={data.client_id} endpoint={"upload_certificat_racordare"} file_type={"new_certificat_racordare"} /></td>
+            <td><DownloadFileButton client_id={data.client_id} endpoint="dosar_prosumator"  file_name={data.dosar_prosumator_nume_fisier} /></td>
+          </tr>
+            <tr>
             <td>Garantii Client: {data.garantii_client}</td>
             <td><UploadFileButton client_id={data.client_id} endpoint={"upload_garantii_client"} file_type={"garantii"}/></td>
             <td><DownloadFileButton client_id={data.client_id} endpoint="garantii_client" file_name={data.garantii_client_nume_fisier}/></td>

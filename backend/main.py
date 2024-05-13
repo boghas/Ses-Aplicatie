@@ -59,7 +59,7 @@ async def shutdown():
     await database.disconnect()
 
 
-@app.post("/login")
+@app.post("/token")
 async def login_for_access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
 ) -> models.Token:
@@ -109,6 +109,7 @@ def create_user_folders(client_id):
         os.mkdir(f'./db/{client_id}/Serie_Inventor')
         os.mkdir(f'./db/{client_id}/Serie_Panouri')
         os.mkdir(f'./db/{client_id}/Serie_Smart_Meter')
+        os.mkdir(f'./db/{client_id}/Certificat_Racordare')
         print('folders created')
     except:
         print('Folders already exists!')
@@ -120,20 +121,22 @@ async def create_new_client(current_user: Annotated[models.User, Depends(models.
     new_client = models.Client(
         client_name=client_name,
         documente_incarcate="NEINCARCAT",
-        contract_anexa="NEINCARCAT", 
+        contract_si_anexa="NEINCARCAT", 
         factura_avans="NEINCARCAT", 
         serie_inventor="NEINCARCAT", 
         serie_smart_meter="NEINCARCAT", 
         serie_panouri="NEINCARCAT", 
-        dosar_prosumator="NEINCARCAT", 
+        dosar_prosumator="NEINCARCAT",
+        certificat_racordare="NEINCARCAT", 
         garantii_client="NEINCARCAT",
         documente_incarcate_nume_fisier="",
-        contract_anexa_nume_fisier="",
+        contract_si_anexa_nume_fisier="",
         factura_avans_nume_fisier="",
         serie_inventor_nume_fisier="",
         serie_smart_meter_nume_fisier="",
         serie_panouri_nume_fisier="",
         dosar_prosumator_nume_fisier="",
+        certificat_racordare_nume_fisier = "",
         garantii_client_nume_fisier=""
         )
     print('inserting into database')
@@ -151,6 +154,41 @@ async def create_new_client(current_user: Annotated[models.User, Depends(models.
             create_user_folders(new_client.client_id)
     
     return {"client_id": new_client.client_id, "client_name": new_client.client_name}
+
+
+@app.put('/upload_certificat_racordare/{client_id}')
+async def update_certificat_racordare(current_user: Annotated[models.User, Depends(models.get_current_active_user)], client_id: int, new_certificat_racordare: list[UploadFile]):
+    destination = Path(f'db/{client_id}/Certificat_Racordare')
+    existing_files = [os.path.join(destination, f) for f in os.listdir(destination)]
+    if not os.path.exists(destination):
+        raise HTTPException(status_code=404, detail="Client not found")
+    files_name = []
+    for upload_file in new_certificat_racordare:
+        destination_file_name = os.path.join(destination, upload_file.filename)
+        try:
+            with Path(destination_file_name).open("wb") as buffer:
+                shutil.copyfileobj(upload_file.file, buffer)
+            for f in existing_files:
+                if not os.path.basename(f) == upload_file.filename:
+                    print()
+                    #os.remove(f)
+        finally:
+            print('document_uploaded!')
+            files_name.append(upload_file.filename)
+    async with database.transaction():
+        with SessionLocal() as session:
+            # Retrieve the item by item_id
+            client = session.query(models.Client).filter(models.Client.client_id == client_id).first()
+            if not client:
+                raise HTTPException(status_code=404, detail="Client not found")
+            
+            client.certificat_racordare = "INCARCAT"
+            client.certificat_racordare_nume_fisier = ','.join(files_name)
+
+            session.commit()
+            session.refresh(client)
+        
+    return client
 
 
 @app.put('/upload_serie_inventor/{client_id}')

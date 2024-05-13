@@ -3,17 +3,20 @@ import axios from 'axios';
 import api from '../api';
 
 const UploadButton = ({ client_id, endpoint, file_type}) => {
-  const [selectedFile, setSelectedFile] = useState(null);
+  const [selectedFiles, setSelectedFiles] = useState([]);
 
   const handleFileChange = (e) => {
-    setSelectedFile(e.target.files[0]);
+    setSelectedFiles(Array.from(e.target.files));
   };
 
   const uploadFile = async () => {
-    if (!selectedFile) return;
+    if (!selectedFiles) return;
 
     const formData = new FormData();
-    formData.append(file_type, selectedFile);
+    selectedFiles.forEach(selectedFile => {
+      formData.append(file_type, selectedFile);
+    })
+    
 
     try {
         const response = await api.put(`http://localhost:8000/${endpoint}/${client_id}`, formData, {
@@ -29,7 +32,7 @@ const UploadButton = ({ client_id, endpoint, file_type}) => {
 
   return (
     <div>
-      <input type="file" onChange={handleFileChange} />
+      <input type="file" onChange={handleFileChange} multiple />
       <button type="button" onClick={uploadFile}>Upload</button>
     </div>
   );
