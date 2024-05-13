@@ -1,44 +1,54 @@
 import React from "react";
-import axios from 'axios';
 import api from "../api";
 
 interface DownloadFileButtonProps {
   client_id: number;
   endpoint: string;
-  file_name: string;
+  file_names: string;
 }
 
-const DownloadFileButton: React.FC<DownloadFileButtonProps> = ({ client_id, endpoint, file_name }) => {
+const DownloadFileButton: React.FC<DownloadFileButtonProps> = ({ client_id, endpoint, file_names }) => {
   const handleDownload = () => {
-    console.log("Download button clicked"); // Add this line
-
-    api.get(`http://localhost:8000/${endpoint}/${client_id}`, {
-      responseType: 'blob',
-    })
-    .then(response => {
-      let filename = `${file_name}`; // Default filename if not found
-      console.log(response)
-
-      // Extract filename from content-disposition header
-      const contentDisposition = response.headers['content-disposition'];
-      console.log(contentDisposition)
-      if (contentDisposition) {
-        const matches = contentDisposition.match(/filename="(.+)"/);
-        if (matches && matches.length > 1) {
-          filename = matches[1];
+    console.log("Download button clicked");
+  
+    // Split the file_names string into an array of filenames
+    const filenames = file_names.split(',');
+    console.log(filenames)
+  
+    // Iterate over each filename to download the corresponding file
+    filenames.forEach((filename, index) => {
+      const url = `http://localhost:8000/${endpoint}/${client_id}?file_name=${new URLSearchParams(filename).toString()}`;
+      api.get(url, {
+        responseType: 'blob',
+        data: filename,
+      })
+      .then(response => {
+        let downloadedFilename = filename.trim(); // Trim whitespace from filename
+  
+        // Extract filename from content-disposition header
+        const contentDisposition = response.headers['content-disposition'];
+        if (contentDisposition) {
+          const matches = contentDisposition.match(/filename="(.+)"/);
+          if (matches && matches.length > 1) {
+            downloadedFilename = matches[1];
+          }
         }
-      }
-
-      const url = window.URL.createObjectURL(response.data); // Access response.data directly here
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', filename);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link); // Clean up after download
-    })
-    .catch(error => {
-      console.error('Error downloading file:', error);
+  
+        const url = window.URL.createObjectURL(response.data);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', downloadedFilename);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link); // Clean up after download
+  
+        // Log success message for each file downloaded
+        console.log(`File ${index + 1} downloaded: ${downloadedFilename}`);
+      })
+      .catch(error => {
+        console.error('Error downloading file:', error);
+      });
+      alert("Fisier/Fisiere descarcate cu success!");
     });
   };
 

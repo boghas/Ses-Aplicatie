@@ -14,6 +14,7 @@ from typing import Annotated
 from datetime import datetime, timedelta, timezone
 from passlib.context import CryptContext
 from jose import JWTError, jwt
+from urllib.parse import unquote
 
 
 app = FastAPI()
@@ -190,388 +191,460 @@ async def update_certificat_racordare(current_user: Annotated[models.User, Depen
         
     return client
 
-
 @app.put('/upload_serie_inventor/{client_id}')
-async def update_serie_inventor(current_user: Annotated[models.User, Depends(models.get_current_active_user)], client_id: int, new_serie_inventor: UploadFile):
-    print('test')
-    print(new_serie_inventor.filename)
+async def update_serie_inventor(current_user: Annotated[models.User, Depends(models.get_current_active_user)], client_id: int, new_serie_inventor: list[UploadFile]):
     destination = Path(f'db/{client_id}/Serie_Inventor')
     existing_files = [os.path.join(destination, f) for f in os.listdir(destination)]
     if not os.path.exists(destination):
         raise HTTPException(status_code=404, detail="Client not found")
-    destination_file_name = os.path.join(destination, new_serie_inventor.filename)
-    try:
-        with Path(destination_file_name).open("wb") as buffer:
-            shutil.copyfileobj(new_serie_inventor.file, buffer)
-        for f in existing_files:
-            if not os.path.basename(f) == new_serie_inventor.filename:
-                os.remove(f)
-        async with database.transaction():
-            with SessionLocal() as session:
-                # Retrieve the item by item_id
-                client = session.query(models.Client).filter(models.Client.client_id == client_id).first()
-                if not client:
-                    raise HTTPException(status_code=404, detail="Client not found")
+    files_name = []
+    for upload_file in new_serie_inventor:
+        destination_file_name = os.path.join(destination, upload_file.filename)
+        try:
+            with Path(destination_file_name).open("wb") as buffer:
+                shutil.copyfileobj(upload_file.file, buffer)
+            for f in existing_files:
+                if not os.path.basename(f) == upload_file.filename:
+                    print()
+                    #os.remove(f)
+        finally:
+            print('document_uploaded!')
+            files_name.append(upload_file.filename)
+    async with database.transaction():
+        with SessionLocal() as session:
+            # Retrieve the item by item_id
+            client = session.query(models.Client).filter(models.Client.client_id == client_id).first()
+            if not client:
+                raise HTTPException(status_code=404, detail="Client not found")
+            
+            client.serie_inventor = "INCARCAT"
+            client.serie_inventor_nume_fisier = ','.join(files_name)
 
-                client.serie_inventor = "INCARCAT"
-                client.serie_inventor_nume_fisier = new_serie_inventor.filename
-
-                session.commit()
-                session.refresh(client)
-    finally:
-        print('document_uploaded!')
+            session.commit()
+            session.refresh(client)
+        
     return client
 
 
 @app.put('/upload_serie_smart_meter/{client_id}')
-async def update_serie_smart_meter(current_user: Annotated[models.User, Depends(models.get_current_active_user)], client_id: int, new_serie_smart_meter: UploadFile):
+async def update_serie_smart_meter(current_user: Annotated[models.User, Depends(models.get_current_active_user)], client_id: int, new_serie_smart_meter: list[UploadFile]):
     destination = Path(f'db/{client_id}/Serie_Smart_Meter')
     existing_files = [os.path.join(destination, f) for f in os.listdir(destination)]
     if not os.path.exists(destination):
         raise HTTPException(status_code=404, detail="Client not found")
-    destination_file_name = os.path.join(destination, new_serie_smart_meter.filename)
-    try:
-        with Path(destination_file_name).open("wb") as buffer:
-            shutil.copyfileobj(new_serie_smart_meter.file, buffer)
-        for f in existing_files:
-            if not os.path.basename(f) == new_serie_smart_meter.filename:
-                os.remove(f)
-        async with database.transaction():
-            with SessionLocal() as session:
-                # Retrieve the item by item_id
-                client = session.query(models.Client).filter(models.Client.client_id == client_id).first()
-                if not client:
-                    raise HTTPException(status_code=404, detail="Client not found")
+    files_name = []
+    for upload_file in new_serie_smart_meter:
+        destination_file_name = os.path.join(destination, upload_file.filename)
+        try:
+            with Path(destination_file_name).open("wb") as buffer:
+                shutil.copyfileobj(upload_file.file, buffer)
+            for f in existing_files:
+                if not os.path.basename(f) == upload_file.filename:
+                    print()
+                    #os.remove(f)
+        finally:
+            print('document_uploaded!')
+            files_name.append(upload_file.filename)
+    async with database.transaction():
+        with SessionLocal() as session:
+            # Retrieve the item by item_id
+            client = session.query(models.Client).filter(models.Client.client_id == client_id).first()
+            if not client:
+                raise HTTPException(status_code=404, detail="Client not found")
+            
+            client.serie_smart_meter = "INCARCAT"
+            client.serie_smart_meter_nume_fisier = ','.join(files_name)
 
-                client.serie_smart_meter = "INCARCAT"
-                client.serie_smart_meter_nume_fisier = new_serie_smart_meter.filename
-
-                session.commit()
-                session.refresh(client)
-    finally:
-        print('document_uploaded!')
+            session.commit()
+            session.refresh(client)
+        
     return client
 
-
 @app.put('/upload_serie_panouri/{client_id}')
-async def upload_and_update_serie_panouri(current_user: Annotated[models.User, Depends(models.get_current_active_user)], client_id: int, serie_panouri: UploadFile):
+async def upload_and_update_serie_panouri(current_user: Annotated[models.User, Depends(models.get_current_active_user)], client_id: int, serie_panouri: list[UploadFile]):
     destination = Path(f'db/{client_id}/Serie_Panouri')
     existing_files = [os.path.join(destination, f) for f in os.listdir(destination)]
     if not os.path.exists(destination):
         raise HTTPException(status_code=404, detail="Client not found")
-    destination_file_name = os.path.join(destination, serie_panouri.filename)
-    try:
-        with Path(destination_file_name).open("wb") as buffer:
-            shutil.copyfileobj(serie_panouri.file, buffer)
-        for f in existing_files:
-            if not os.path.basename(f) == serie_panouri.filename:
-                os.remove(f)
-        async with database.transaction():
-            with SessionLocal() as session:
-                # Retrieve the item by item_id
-                client = session.query(models.Client).filter(models.Client.client_id == client_id).first()
-                if not client:
-                    raise HTTPException(status_code=404, detail="Client not found")
+    files_name = []
+    for upload_file in serie_panouri:
+        destination_file_name = os.path.join(destination, upload_file.filename)
+        try:
+            with Path(destination_file_name).open("wb") as buffer:
+                shutil.copyfileobj(upload_file.file, buffer)
+            for f in existing_files:
+                if not os.path.basename(f) == upload_file.filename:
+                    print()
+                    #os.remove(f)
+        finally:
+            print('document_uploaded!')
+            files_name.append(upload_file.filename)
+    async with database.transaction():
+        with SessionLocal() as session:
+            # Retrieve the item by item_id
+            client = session.query(models.Client).filter(models.Client.client_id == client_id).first()
+            if not client:
+                raise HTTPException(status_code=404, detail="Client not found")
+            
+            client.serie_panouri = "INCARCAT"
+            client.serie_panouri_nume_fisier = ','.join(files_name)
 
-                client.serie_panouri = "INCARCAT"
-                client.serie_panouri_nume_fisier = serie_panouri.filename
-
-                session.commit()
-                session.refresh(client)
-    finally:
-        print('document_uploaded!')
+            session.commit()
+            session.refresh(client)
+        
     return client
 
 
 @app.put('/upload_documente_incarcate/{client_id}')
-async def upload_and_update_documente_incarcate(current_user: Annotated[models.User, Depends(models.get_current_active_user)], client_id: int, document: UploadFile):
+async def upload_and_update_documente_incarcate(current_user: Annotated[models.User, Depends(models.get_current_active_user)], client_id: int, document: list[UploadFile]):
     destination = Path(f'db/{client_id}/Documente_Incarcate')
     existing_files = [os.path.join(destination, f) for f in os.listdir(destination)]
     if not os.path.exists(destination):
         raise HTTPException(status_code=404, detail="Client not found")
-    destination_file_name = os.path.join(destination, document.filename)
-    try:
-        with Path(destination_file_name).open("wb") as buffer:
-            shutil.copyfileobj(document.file, buffer)
-        for f in existing_files:
-            if not os.path.basename(f) == document.filename:
-                os.remove(f)
-        async with database.transaction():
-            with SessionLocal() as session:
-                # Retrieve the item by item_id
-                client = session.query(models.Client).filter(models.Client.client_id == client_id).first()
-                if not client:
-                    raise HTTPException(status_code=404, detail="Client not found")
+    files_name = []
+    for upload_file in document:
+        destination_file_name = os.path.join(destination, upload_file.filename)
+        try:
+            with Path(destination_file_name).open("wb") as buffer:
+                shutil.copyfileobj(upload_file.file, buffer)
+            for f in existing_files:
+                if not os.path.basename(f) == upload_file.filename:
+                    print()
+                    #os.remove(f)
+        finally:
+            print('document_uploaded!')
+            files_name.append(upload_file.filename)
+    async with database.transaction():
+        with SessionLocal() as session:
+            # Retrieve the item by item_id
+            client = session.query(models.Client).filter(models.Client.client_id == client_id).first()
+            if not client:
+                raise HTTPException(status_code=404, detail="Client not found")
+            
+            client.documente_incarcate = "INCARCAT"
+            client.documente_incarcate_nume_fisier = ','.join(files_name)
 
-                client.documente_incarcate = "INCARCAT"
-                client.documente_incarcate_nume_fisier = document.filename
-
-                session.commit()
-                session.refresh(client)
-    finally:
-        print('document_uploaded!')
+            session.commit()
+            session.refresh(client)
+        
     return client
+
 
 
 @app.put('/upload_contract_anexa/{client_id}')
-async def upload_and_update_contract_anexa(current_user: Annotated[models.User, Depends(models.get_current_active_user)], client_id: int, contract_anexa: UploadFile):
-    destination = os.path.join(os.path.join('db', str(client_id)), 'Contract_Anexa')
+async def upload_and_update_contract_anexa(current_user: Annotated[models.User, Depends(models.get_current_active_user)], client_id: int, contract_anexa: list[UploadFile]):
+    destination = Path(f'db/{client_id}/Contract_Anexa')
     existing_files = [os.path.join(destination, f) for f in os.listdir(destination)]
     if not os.path.exists(destination):
-        print('this')
         raise HTTPException(status_code=404, detail="Client not found")
-    destination_file_name = os.path.join(destination, contract_anexa.filename)
-    print('nah')
-    try:
-        with Path(destination_file_name).open("wb") as buffer:
-            shutil.copyfileobj(contract_anexa.file, buffer)
-        for f in existing_files:
-            if not os.path.basename(f) == contract_anexa.filename:
-                os.remove(f)
-        async with database.transaction():
-            with SessionLocal() as session:
-                # Retrieve the item by item_id
-                client = session.query(models.Client).filter(models.Client.client_id == client_id).first()
-                if not client:
-                    raise HTTPException(status_code=404, detail="Client not found")
+    files_name = []
+    for upload_file in contract_anexa:
+        destination_file_name = os.path.join(destination, upload_file.filename)
+        try:
+            with Path(destination_file_name).open("wb") as buffer:
+                shutil.copyfileobj(upload_file.file, buffer)
+            for f in existing_files:
+                if not os.path.basename(f) == upload_file.filename:
+                    print()
+                    #os.remove(f)
+        finally:
+            print('document_uploaded!')
+            files_name.append(upload_file.filename)
+    async with database.transaction():
+        with SessionLocal() as session:
+            # Retrieve the item by item_id
+            client = session.query(models.Client).filter(models.Client.client_id == client_id).first()
+            if not client:
+                raise HTTPException(status_code=404, detail="Client not found")
+            
+            client.contract_si_anexa = "INCARCAT"
+            client.contract_si_anexa_nume_fisier = ','.join(files_name)
 
-                client.contract_anexa = "INCARCAT"
-                client.contract_anexa_nume_fisier = contract_anexa.filename
-
-                session.commit()
-                session.refresh(client)
-    finally:
-        print('document_uploaded!')
+            session.commit()
+            session.refresh(client)
+        
     return client
-    
+
 
 @app.put('/upload_factura_avans/{client_id}')
-async def upload_and_update_factura_avans(current_user: Annotated[models.User, Depends(models.get_current_active_user)], client_id: int, factura: UploadFile):
-    destination = os.path.join(os.path.join('db', str(client_id)), 'Factura_Avans')
+async def upload_and_update_factura_avans(current_user: Annotated[models.User, Depends(models.get_current_active_user)], client_id: int, factura: list[UploadFile]):
+    destination = Path(f'db/{client_id}/Factura_Avans')
     existing_files = [os.path.join(destination, f) for f in os.listdir(destination)]
     if not os.path.exists(destination):
         raise HTTPException(status_code=404, detail="Client not found")
-    destination_file_name = os.path.join(destination, factura.filename)
-    try:
-        with Path(destination_file_name).open("wb") as buffer:
-            shutil.copyfileobj(factura.file, buffer)
-        for f in existing_files:
-            if not os.path.basename(f) == factura.filename:
-                os.remove(f)
-        async with database.transaction():
-            with SessionLocal() as session:
-                # Retrieve the item by item_id
-                client = session.query(models.Client).filter(models.Client.client_id == client_id).first()
-                if not client:
-                    raise HTTPException(status_code=404, detail="Client not found")
+    files_name = []
+    for upload_file in factura:
+        destination_file_name = os.path.join(destination, upload_file.filename)
+        try:
+            with Path(destination_file_name).open("wb") as buffer:
+                shutil.copyfileobj(upload_file.file, buffer)
+            for f in existing_files:
+                if not os.path.basename(f) == upload_file.filename:
+                    print()
+                    #os.remove(f)
+        finally:
+            print('document_uploaded!')
+            files_name.append(upload_file.filename)
+    async with database.transaction():
+        with SessionLocal() as session:
+            # Retrieve the item by item_id
+            client = session.query(models.Client).filter(models.Client.client_id == client_id).first()
+            if not client:
+                raise HTTPException(status_code=404, detail="Client not found")
+            
+            client.factura_avans = "INCARCAT"
+            client.factura_avans_nume_fisier = ','.join(files_name)
 
-                client.factura_avans = "INCARCAT"
-                client.factura_avans_nume_fisier = factura.filename
-
-                session.commit()
-                session.refresh(client)
-    finally:
-        print('document_uploaded!')
+            session.commit()
+            session.refresh(client)
+        
     return client
 
 
 @app.put('/upload_dosar_prosumator/{client_id}')
-async def upload_and_update_dosar_prosumator(current_user: Annotated[models.User, Depends(models.get_current_active_user)], client_id: int, dosar: UploadFile):
-    destination = os.path.join(os.path.join('db', str(client_id)), 'Dosar_Prosumator')
+async def upload_and_update_dosar_prosumator(current_user: Annotated[models.User, Depends(models.get_current_active_user)], client_id: int, dosar: list[UploadFile]):
+    destination = Path(f'db/{client_id}/Dosar_Prosumator')
     existing_files = [os.path.join(destination, f) for f in os.listdir(destination)]
     if not os.path.exists(destination):
         raise HTTPException(status_code=404, detail="Client not found")
-    destination_file_name = os.path.join(destination, dosar.filename)
-    try:
-        with Path(destination_file_name).open("wb") as buffer:
-            shutil.copyfileobj(dosar.file, buffer)
-        for f in existing_files:
-            if not os.path.basename(f) == dosar.filename:
-                os.remove(f)
-        async with database.transaction():
-            with SessionLocal() as session:
-                # Retrieve the item by item_id
-                client = session.query(models.Client).filter(models.Client.client_id == client_id).first()
-                if not client:
-                    raise HTTPException(status_code=404, detail="Client not found")
+    files_name = []
+    for upload_file in dosar:
+        destination_file_name = os.path.join(destination, upload_file.filename)
+        try:
+            with Path(destination_file_name).open("wb") as buffer:
+                shutil.copyfileobj(upload_file.file, buffer)
+            for f in existing_files:
+                if not os.path.basename(f) == upload_file.filename:
+                    print()
+                    #os.remove(f)
+        finally:
+            print('document_uploaded!')
+            files_name.append(upload_file.filename)
+    async with database.transaction():
+        with SessionLocal() as session:
+            # Retrieve the item by item_id
+            client = session.query(models.Client).filter(models.Client.client_id == client_id).first()
+            if not client:
+                raise HTTPException(status_code=404, detail="Client not found")
+            
+            client.dosar_prosumator = "INCARCAT"
+            client.dosar_prosumator_nume_fisier = ','.join(files_name)
 
-                client.dosar_prosumator = "INCARCAT"
-                client.dosar_prosumator = dosar.filename
+            session.commit()
+            session.refresh(client)
+        
+    return client
 
-                session.commit()
-                session.refresh(client)
-    finally:
-        print('document_uploaded!')
+@app.put('/upload_garantii_client/{client_id}')
+async def upload_and_update_garantii_client(current_user: Annotated[models.User, Depends(models.get_current_active_user)], client_id: int, garantii: list[UploadFile]):
+    destination = Path(f'db/{client_id}/Garantii_Client')
+    existing_files = [os.path.join(destination, f) for f in os.listdir(destination)]
+    if not os.path.exists(destination):
+        raise HTTPException(status_code=404, detail="Client not found")
+    files_name = []
+    for upload_file in garantii:
+        destination_file_name = os.path.join(destination, upload_file.filename)
+        try:
+            with Path(destination_file_name).open("wb") as buffer:
+                shutil.copyfileobj(upload_file.file, buffer)
+            for f in existing_files:
+                if not os.path.basename(f) == upload_file.filename:
+                    print()
+                    #os.remove(f)
+        finally:
+            print('document_uploaded!')
+            files_name.append(upload_file.filename)
+    async with database.transaction():
+        with SessionLocal() as session:
+            # Retrieve the item by item_id
+            client = session.query(models.Client).filter(models.Client.client_id == client_id).first()
+            if not client:
+                raise HTTPException(status_code=404, detail="Client not found")
+            
+            client.garantii_client = "INCARCAT"
+            client.garantii_client_nume_fisier = ','.join(files_name)
+
+            session.commit()
+            session.refresh(client)
+        
     return client
 
 
-@app.put('/upload_garantii_client/{client_id}')
-async def upload_and_update_garantii_client(current_user: Annotated[models.User, Depends(models.get_current_active_user)], client_id: int, garantii: UploadFile):
-    try:
-        print('here')
-    except Exception as e:
-        print(e)
-    destination = os.path.join(os.path.join('db', str(client_id)), 'Garantii_Client')
-    existing_files = [os.path.join(destination, f) for f in os.listdir(destination)]
-    if not os.path.exists(destination):
-        raise HTTPException(status_code=404, detail="Client not found")
-    destination_file_name = os.path.join(destination, garantii.filename)
-    try:
-        with Path(destination_file_name).open("wb") as buffer:
-            shutil.copyfileobj(garantii.file, buffer)
-        for f in existing_files:
-            if not os.path.basename(f) == garantii.filename:
-                os.remove(f)
-        async with database.transaction():
-            with SessionLocal() as session:
-                # Retrieve the item by item_id
-                client = session.query(models.Client).filter(models.Client.client_id == client_id).first()
-                if not client:
-                    raise HTTPException(status_code=404, detail="Client not found")
-
-                client.garantii_client = "INCARCAT"
-                client.garantii_client = garantii.filename
-
-                session.commit()
-                session.refresh(client)
-    finally:
-        print('document_uploaded!')
-    #return client
-
-
-@app.get('/documente_incarcate/{client_id}')
-async def download_documente_incarcate_by_id(current_user: Annotated[models.User, Depends(models.get_current_active_user)], client_id: int):
-    print('test')
+@app.get('/certificat_racordare/{client_id}')
+async def download_certificat_de_racordare_by_id(current_user: Annotated[models.User, Depends(models.get_current_active_user)], client_id: int, file_name:str):
     db_id_path = os.path.join('db', str(client_id))
-    document_path = os.path.join(db_id_path, 'Documente_Incarcate')
+    document_path = os.path.join(db_id_path, 'Certificat_Racordare')
+    file_path = ''
     if not os.path.exists(document_path):
         raise HTTPException(status_code=404, detail="Client not found")
     try:
-        file_name = os.listdir(document_path)[0]
+        file_names = os.listdir(document_path)
     except:
-        file_name = None
-    if file_name is not None:
-        file_path = os.path.join(document_path, file_name)
-    if not os.path.exists(file_path):
-        raise HTTPException(status_code=404, detail="File not found!")
+        file_names = None
+    if file_names is not None:
+        for file in file_names:
+            if file == file_name[0: -1]:
+                file_path = os.path.join(document_path, file)
+                if not os.path.exists(file_path):
+                    raise HTTPException(status_code=404, detail="File not found!")
+    return FileResponse(path=file_path, filename=os.path.basename(file_path))
+
+
+@app.get('/documente_incarcate/{client_id}')
+async def download_documente_incarcate_by_id(current_user: Annotated[models.User, Depends(models.get_current_active_user)], client_id: int, file_name:str):
+    db_id_path = os.path.join('db', str(client_id))
+    document_path = os.path.join(db_id_path, 'Documente_Incarcate')
+    file_path = ''
+    if not os.path.exists(document_path):
+        raise HTTPException(status_code=404, detail="Client not found")
+    try:
+        file_names = os.listdir(document_path)
+    except:
+        file_names = None
+    if file_names is not None:
+        for file in file_names:
+            if file == file_name[0: -1]:
+                file_path = os.path.join(document_path, file)
+                if not os.path.exists(file_path):
+                    raise HTTPException(status_code=404, detail="File not found!")
     return FileResponse(path=file_path, filename=os.path.basename(file_path))
 
 
 @app.get('/contract_anexa/{client_id}')
-async def download_contract_anexa_by_id(current_user: Annotated[models.User, Depends(models.get_current_active_user)], client_id: int):
+async def download_contract_anexa_by_id(current_user: Annotated[models.User, Depends(models.get_current_active_user)], client_id: int, file_name:str):
     db_id_path = os.path.join('db', str(client_id))
     document_path = os.path.join(db_id_path, 'Contract_Anexa')
+    file_path = ''
     if not os.path.exists(document_path):
         raise HTTPException(status_code=404, detail="Client not found")
     try:
-        file_name = os.listdir(document_path)[0]
+        file_names = os.listdir(document_path)
     except:
-        file_name = None
-    if file_name is not None:
-        file_path = os.path.join(document_path, file_name)
-    if not os.path.exists(file_path):
-        raise HTTPException(status_code=404, detail="File not found!")
+        file_names = None
+    if file_names is not None:
+        for file in file_names:
+            if file == file_name[0: -1]:
+                file_path = os.path.join(document_path, file)
+                if not os.path.exists(file_path):
+                    raise HTTPException(status_code=404, detail="File not found!")
     return FileResponse(path=file_path, filename=os.path.basename(file_path))
 
 
 @app.get('/factura_avans/{client_id}')
-async def download_factura_avans_by_id(current_user: Annotated[models.User, Depends(models.get_current_active_user)], client_id: int):
-    print('test')
+async def download_factura_avans_by_id(current_user: Annotated[models.User, Depends(models.get_current_active_user)], client_id: int, file_name:str):
     db_id_path = os.path.join('db', str(client_id))
     document_path = os.path.join(db_id_path, 'Factura_Avans')
+    file_path = ''
     if not os.path.exists(document_path):
         raise HTTPException(status_code=404, detail="Client not found")
     try:
-        file_name = os.listdir(document_path)[0]
+        file_names = os.listdir(document_path)
     except:
-        file_name = None
-    if file_name is not None:
-        file_path = os.path.join(document_path, file_name)
-    if not os.path.exists(file_path):
-        raise HTTPException(status_code=404, detail="File not found!")
+        file_names = None
+    if file_names is not None:
+        for file in file_names:
+            if file == file_name[0: -1]:
+                file_path = os.path.join(document_path, file)
+                if not os.path.exists(file_path):
+                    raise HTTPException(status_code=404, detail="File not found!")
     return FileResponse(path=file_path, filename=os.path.basename(file_path))
 
 
 @app.get('/dosar_prosumator/{client_id}')
-async def download_dosar_prosumator_by_id(current_user: Annotated[models.User, Depends(models.get_current_active_user)], client_id: int):
+async def download_dosar_prosumator_by_id(current_user: Annotated[models.User, Depends(models.get_current_active_user)], client_id: int, file_name:str):
     db_id_path = os.path.join('db', str(client_id))
     document_path = os.path.join(db_id_path, 'Dosar_Prosumator')
+    file_path = ''
     if not os.path.exists(document_path):
         raise HTTPException(status_code=404, detail="Client not found")
     try:
-        file_name = os.listdir(document_path)[0]
+        file_names = os.listdir(document_path)
     except:
-        file_name = None
-    if file_name is not None:
-        file_path = os.path.join(document_path, file_name)
-    if not os.path.exists(file_path):
-        raise HTTPException(status_code=404, detail="File not found!")
+        file_names = None
+    if file_names is not None:
+        for file in file_names:
+            if file == file_name[0: -1]:
+                file_path = os.path.join(document_path, file)
+                if not os.path.exists(file_path):
+                    raise HTTPException(status_code=404, detail="File not found!")
     return FileResponse(path=file_path, filename=os.path.basename(file_path))
 
 
 @app.get('/garantii_client/{client_id}')
-async def download_garantii_client_by_id(current_user: Annotated[models.User, Depends(models.get_current_active_user)], client_id: int):
+async def download_garantii_client_by_id(current_user: Annotated[models.User, Depends(models.get_current_active_user)], client_id: int, file_name:str):
     db_id_path = os.path.join('db', str(client_id))
     document_path = os.path.join(db_id_path, 'Garantii_Client')
+    file_path = ''
     if not os.path.exists(document_path):
         raise HTTPException(status_code=404, detail="Client not found")
     try:
-        file_name = os.listdir(document_path)[0]
+        file_names = os.listdir(document_path)
     except:
-        file_name = None
-    if file_name is not None:
-        file_path = os.path.join(document_path, file_name)
-    if not os.path.exists(file_path):
-        raise HTTPException(status_code=404, detail="File not found!")
+        file_names = None
+    if file_names is not None:
+        for file in file_names:
+            if file == file_name[0: -1]:
+                file_path = os.path.join(document_path, file)
+                if not os.path.exists(file_path):
+                    raise HTTPException(status_code=404, detail="File not found!")
     return FileResponse(path=file_path, filename=os.path.basename(file_path))
 
 
 @app.get('/serie_inventor/{client_id}')
-async def download_serie_inventor_by_id(current_user: Annotated[models.User, Depends(models.get_current_active_user)], client_id: int):
+async def download_serie_inventor_by_id(current_user: Annotated[models.User, Depends(models.get_current_active_user)], client_id: int, file_name:str):
     db_id_path = os.path.join('db', str(client_id))
     document_path = os.path.join(db_id_path, 'Serie_Inventor')
+    file_path = ''
     if not os.path.exists(document_path):
         raise HTTPException(status_code=404, detail="Client not found")
     try:
-        file_name = os.listdir(document_path)[0]
+        file_names = os.listdir(document_path)
     except:
-        file_name = None
-    if file_name is not None:
-        file_path = os.path.join(document_path, file_name)
-    if not os.path.exists(file_path):
-        raise HTTPException(status_code=404, detail="File not found!")
+        file_names = None
+    if file_names is not None:
+        for file in file_names:
+            if file == file_name[0: -1]:
+                file_path = os.path.join(document_path, file)
+                if not os.path.exists(file_path):
+                    raise HTTPException(status_code=404, detail="File not found!")
     return FileResponse(path=file_path, filename=os.path.basename(file_path))
 
 
 @app.get('/serie_panouri/{client_id}')
-async def download_serie_panouri_by_id(current_user: Annotated[models.User, Depends(models.get_current_active_user)], client_id: int):
+async def download_serie_panouri_by_id(current_user: Annotated[models.User, Depends(models.get_current_active_user)], client_id: int, file_name:str):
     db_id_path = os.path.join('db', str(client_id))
     document_path = os.path.join(db_id_path, 'Serie_Panouri')
+    file_path = ''
     if not os.path.exists(document_path):
         raise HTTPException(status_code=404, detail="Client not found")
     try:
-        file_name = os.listdir(document_path)[0]
+        file_names = os.listdir(document_path)
     except:
-        file_name = None
-    if file_name is not None:
-        file_path = os.path.join(document_path, file_name)
-    if not os.path.exists(file_path):
-        raise HTTPException(status_code=404, detail="File not found!")
+        file_names = None
+    if file_names is not None:
+        for file in file_names:
+            if file == file_name[0: -1]:
+                file_path = os.path.join(document_path, file)
+                if not os.path.exists(file_path):
+                    raise HTTPException(status_code=404, detail="File not found!")
     return FileResponse(path=file_path, filename=os.path.basename(file_path))
 
 
 @app.get('/serie_smart_meter/{client_id}')
-async def downloadserie_smart_meter_by_id(current_user: Annotated[models.User, Depends(models.get_current_active_user)], client_id: int):
+async def downloadserie_smart_meter_by_id(current_user: Annotated[models.User, Depends(models.get_current_active_user)], client_id: int, file_name:str):
     db_id_path = os.path.join('db', str(client_id))
     document_path = os.path.join(db_id_path, 'Serie_Smart_Meter')
+    file_path = ''
     if not os.path.exists(document_path):
         raise HTTPException(status_code=404, detail="Client not found")
     try:
-        file_name = os.listdir(document_path)[0]
+        file_names = os.listdir(document_path)
     except:
-        file_name = None
-    if file_name is not None:
-        file_path = os.path.join(document_path, file_name)
-    if not os.path.exists(file_path):
-        raise HTTPException(status_code=404, detail="File not found!")
+        file_names = None
+    if file_names is not None:
+        for file in file_names:
+            if file == file_name[0: -1]:
+                file_path = os.path.join(document_path, file)
+                if not os.path.exists(file_path):
+                    raise HTTPException(status_code=404, detail="File not found!")
     return FileResponse(path=file_path, filename=os.path.basename(file_path))

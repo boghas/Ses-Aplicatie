@@ -56,4 +56,5 @@ npm install json-server
 npm i react-router-dom
 npm i file-saver
 npm i jwt-decode
+npm i bootstrap@5.3.3
 npm start
