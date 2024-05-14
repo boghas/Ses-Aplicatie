@@ -14,12 +14,15 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     const auth = async () => {
         const token = localStorage.getItem(ACCESS_TOKEN);
         if (!token) {
+
             setIsAuthorized(false);
             return;
         }
         const decoded: any = jwtDecode(token);
         const tokenExpiration: number = decoded.exp;
         const now: number = Date.now() / 1000;
+
+        //console.log(token);
 
         if (tokenExpiration < now) {
             return <Navigate to="/login" />;

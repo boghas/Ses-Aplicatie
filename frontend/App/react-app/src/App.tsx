@@ -17,9 +17,9 @@ const App: React.FC = () => {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path='/login' element={<Login />} />
         <Route path='/' element={<ProtectedRoute><Home /></ProtectedRoute> } />
         <Route path='/detalii/:client_id' element={<ProtectedRoute><Detalii /></ProtectedRoute> } />
-        <Route path='/login' element={<Login />} />
         <Route path='/logout' element={<Logout />} />
       </Routes>
     </BrowserRouter>
