@@ -15,12 +15,18 @@ from datetime import datetime, timedelta, timezone
 from passlib.context import CryptContext
 from jose import JWTError, jwt
 from urllib.parse import unquote
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import Column, Integer, String, Boolean
+from typing import Annotated, Union
+from pydantic import BaseModel
 
+ALGORITHM = "HS256"
+Base = declarative_base()
 
 app = FastAPI()
 
 origins = [
-    "*"  # Replace this with the actual origin of your frontend
+    "*"  
 ]
 
 app.add_middleware(
@@ -37,6 +43,9 @@ db_user=os.environ.get('DB_USER')
 db_password=os.environ.get('DB_PASSWORD')
 db_url=os.environ.get('DB_URL')
 db_port=os.environ.get('DB_PORT')
+secret_key=os.environ.get('SECRET_KEY')
+algorithm=os.environ.get('ALGORITHM'),
+token_expiration_time=os.environ.get('ACCESS_TOKEN_EXPIRE_MINUTES')
 
 database_url = f"postgresql://{db_user}:{db_password}@{db_url}:{db_port}/{db_name}"
 engine = create_engine(database_url)
@@ -60,29 +69,144 @@ async def shutdown():
     await database.disconnect()
 
 
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+
+class TokenData(BaseModel):
+    username: Union[str, None] = None
+
+
+class Users(Base):
+    __tablename__ = "users"
+    user_id: int = Column(Integer, primary_key=True, index=True)
+    username: str = Column(String)
+    hashed_password: str = Column(String)
+    disabled: bool = Column(Boolean)
+
+
+class UserInDB(Users):
+    Users.hashed_password: str
+
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+
+def verify_password(plain_password, hashed_password):
+    return pwd_context.verify(plain_password, hashed_password)
+
+
+def get_password_hash(password):
+    return pwd_context.hash(password)
+
+
+def get_user(username):
+    session = SessionLocal()
+    try:
+        with session.begin():
+            user = session.query(Users).filter(Users.username == username).first()
+            if user:
+                user_dict = user.__dict__
+                user_dict.pop('_sa_instance_state', None)
+                return UserInDB(**user_dict)
+    finally:
+        session.close()
+
+
+def authenticate_user(username: str, password: str):
+    user = get_user(username)
+    if not user:
+        return False
+    if not verify_password(password, user.hashed_password):
+        return False
+    return user
+
+
+def create_access_token(data: dict, expires_delta: Union[timedelta, None] = None):
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.now(timezone.utc) + expires_delta
+    else:
+        expire = datetime.now(timezone.utc) + timedelta(minutes=135)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, secret_key, algorithm=ALGORITHM)
+    return encoded_jwt
+
+
+async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, secret_key, algorithms=[ALGORITHM])
+        print(payload)
+        username: str = payload.get("sub")
+        print(username)
+        if username is None:
+            raise credentials_exception
+        token_data = TokenData(username=username)
+    except JWTError:
+        raise credentials_exception
+    user = get_user(username=token_data.username)
+    if user is None:
+        raise credentials_exception
+    return user
+
+
+async def get_current_active_user(
+    current_user: Annotated[Users, Depends(get_current_user)],
+):
+    if current_user.disabled:
+        raise HTTPException(status_code=400, detail="Inactive user")
+    return current_user
+
+
+@app.post('/create_user')
+async def create_user(username: str, password: str):
+    hashed_password = get_password_hash(password)
+    print(hashed_password)
+    user = Users(username=username, hashed_password=hashed_password)
+    user.disabled = False
+
+    async with database.transaction():
+            with SessionLocal() as session:
+                try:
+                    session.add(user)
+                    print('Client creat')
+                except:
+                    print('Failed to create user')
+                
+                session.commit()
+                session.refresh(user)
+    return user
+
+
 @app.post("/token")
 async def login_for_access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-) -> models.Token:
-    user = models.authenticate_user(models.fake_users_db, form_data.username, form_data.password)
-    print(user)
+) -> Token:
+    user = authenticate_user(username=form_data.username, password=form_data.password)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    print(user)
-    access_token_expires = timedelta(minutes=models.ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = models.create_access_token(
+    print(user.username)
+    access_token_expires = timedelta(minutes=int(token_expiration_time))
+    access_token = create_access_token(
         data={"sub": user.username}, expires_delta=access_token_expires
     )
     return ({"access_token": access_token, "token_type": "bearer"})
-    #return models.Token(access_token=access_token, token_type="bearer")
 
 
 @app.get('/')
-async def get_all_clients(current_user: Annotated[models.User, Depends(models.get_current_active_user)]):
+async def get_all_clients(current_user: Annotated[Users, Depends(get_current_active_user)]):
     query = models.Client.__table__.select()
     clients = {
         'clients': database.fetch_all(query)
@@ -90,7 +214,7 @@ async def get_all_clients(current_user: Annotated[models.User, Depends(models.ge
     return await database.fetch_all(query)
 
 @app.get('/client/{client_id}')
-async def get_client_by_id(current_user: Annotated[models.User, Depends(models.get_current_active_user)], client_id: int):
+async def get_client_by_id(current_user: Annotated[Users, Depends(get_current_active_user)], client_id: int):
     async with database.transaction():
         with SessionLocal() as session:
             client = session.query(models.Client).filter(models.Client.client_id == client_id).first()
