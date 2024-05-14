@@ -34,6 +34,8 @@
 7.  Run the server. From the /backend direcory run:
     uvicorn main:app --reload
 
+openssl rand -hex 32
+
 React:
 
 create new vite project
@@ -53,4 +55,6 @@ npm i react-data-table-component
 npm install json-server
 npm i react-router-dom
 npm i file-saver
+npm i jwt-decode
+npm i bootstrap@5.3.3
 npm start

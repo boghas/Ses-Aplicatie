@@ -5,3 +5,5 @@ databases[postgresql]
 psycopg2
 python-dotenv
 starlette-api
+python-jose[cryptography]
+passlib[bcrypt]==1.7.3
