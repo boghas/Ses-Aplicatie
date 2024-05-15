@@ -159,7 +159,7 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
 
 
 async def get_current_active_user(
-    current_user: Annotated[Users, Depends(get_current_user)],
+    current_user: Annotated[models.Users, Depends(get_current_user)],
 ):
     if current_user.disabled:
         raise HTTPException(status_code=400, detail="Inactive user")
@@ -169,7 +169,6 @@ async def get_current_active_user(
 @app.post('/create_user')
 async def create_user(username: str, password: str):
     hashed_password = get_password_hash(password)
-    print(hashed_password)
     user = Users(username=username, hashed_password=hashed_password)
     user.disabled = False
 
@@ -206,7 +205,7 @@ async def login_for_access_token(
 
 
 @app.get('/')
-async def get_all_clients(current_user: Annotated[Users, Depends(get_current_active_user)]):
+async def get_all_clients(current_user: Annotated[models.Users, Depends(get_current_active_user)]):
     query = models.Client.__table__.select()
     clients = {
         'clients': database.fetch_all(query)
@@ -214,7 +213,7 @@ async def get_all_clients(current_user: Annotated[Users, Depends(get_current_act
     return await database.fetch_all(query)
 
 @app.get('/client/{client_id}')
-async def get_client_by_id(current_user: Annotated[Users, Depends(get_current_active_user)], client_id: int):
+async def get_client_by_id(current_user: Annotated[models.Users, Depends(get_current_active_user)], client_id: int):
     async with database.transaction():
         with SessionLocal() as session:
             client = session.query(models.Client).filter(models.Client.client_id == client_id).first()
@@ -241,8 +240,9 @@ def create_user_folders(client_id):
         os.remove(f'./db/{client_id}')
         create_user_folders(client_id)
 
+
 @app.post('/client/create_client/{client_name}', status_code=status.HTTP_201_CREATED)
-async def create_new_client(current_user: Annotated[models.User, Depends(models.get_current_active_user)], client_name: str):
+async def create_new_client(current_user: Annotated[models.Users, Depends(get_current_active_user)], client_name: str):
     new_client = models.Client(
         client_name=client_name,
         documente_incarcate="NEINCARCAT",
@@ -264,7 +264,6 @@ async def create_new_client(current_user: Annotated[models.User, Depends(models.
         certificat_racordare_nume_fisier = "",
         garantii_client_nume_fisier=""
         )
-    print('inserting into database')
     async with database.transaction():
             with SessionLocal() as session:
                 try:
@@ -282,7 +281,7 @@ async def create_new_client(current_user: Annotated[models.User, Depends(models.
 
 
 @app.put('/upload_certificat_racordare/{client_id}')
-async def update_certificat_racordare(current_user: Annotated[models.User, Depends(models.get_current_active_user)], client_id: int, new_certificat_racordare: list[UploadFile]):
+async def update_certificat_racordare(current_user: Annotated[models.Users, Depends(get_current_active_user)], client_id: int, new_certificat_racordare: list[UploadFile]):
     destination = Path(f'db/{client_id}/Certificat_Racordare')
     existing_files = [os.path.join(destination, f) for f in os.listdir(destination)]
     if not os.path.exists(destination):
@@ -316,7 +315,7 @@ async def update_certificat_racordare(current_user: Annotated[models.User, Depen
     return client
 
 @app.put('/upload_serie_inventor/{client_id}')
-async def update_serie_inventor(current_user: Annotated[models.User, Depends(models.get_current_active_user)], client_id: int, new_serie_inventor: list[UploadFile]):
+async def update_serie_inventor(current_user: Annotated[models.Users, Depends(get_current_active_user)], client_id: int, new_serie_inventor: list[UploadFile]):
     destination = Path(f'db/{client_id}/Serie_Inventor')
     existing_files = [os.path.join(destination, f) for f in os.listdir(destination)]
     if not os.path.exists(destination):
@@ -351,7 +350,7 @@ async def update_serie_inventor(current_user: Annotated[models.User, Depends(mod
 
 
 @app.put('/upload_serie_smart_meter/{client_id}')
-async def update_serie_smart_meter(current_user: Annotated[models.User, Depends(models.get_current_active_user)], client_id: int, new_serie_smart_meter: list[UploadFile]):
+async def update_serie_smart_meter(current_user: Annotated[models.Users, Depends(get_current_active_user)], client_id: int, new_serie_smart_meter: list[UploadFile]):
     destination = Path(f'db/{client_id}/Serie_Smart_Meter')
     existing_files = [os.path.join(destination, f) for f in os.listdir(destination)]
     if not os.path.exists(destination):
@@ -385,7 +384,7 @@ async def update_serie_smart_meter(current_user: Annotated[models.User, Depends(
     return client
 
 @app.put('/upload_serie_panouri/{client_id}')
-async def upload_and_update_serie_panouri(current_user: Annotated[models.User, Depends(models.get_current_active_user)], client_id: int, serie_panouri: list[UploadFile]):
+async def upload_and_update_serie_panouri(current_user: Annotated[models.Users, Depends(get_current_active_user)], client_id: int, serie_panouri: list[UploadFile]):
     destination = Path(f'db/{client_id}/Serie_Panouri')
     existing_files = [os.path.join(destination, f) for f in os.listdir(destination)]
     if not os.path.exists(destination):
@@ -420,7 +419,7 @@ async def upload_and_update_serie_panouri(current_user: Annotated[models.User, D
 
 
 @app.put('/upload_documente_incarcate/{client_id}')
-async def upload_and_update_documente_incarcate(current_user: Annotated[models.User, Depends(models.get_current_active_user)], client_id: int, document: list[UploadFile]):
+async def upload_and_update_documente_incarcate(current_user: Annotated[models.Users, Depends(get_current_active_user)], client_id: int, document: list[UploadFile]):
     destination = Path(f'db/{client_id}/Documente_Incarcate')
     existing_files = [os.path.join(destination, f) for f in os.listdir(destination)]
     if not os.path.exists(destination):
@@ -456,7 +455,7 @@ async def upload_and_update_documente_incarcate(current_user: Annotated[models.U
 
 
 @app.put('/upload_contract_anexa/{client_id}')
-async def upload_and_update_contract_anexa(current_user: Annotated[models.User, Depends(models.get_current_active_user)], client_id: int, contract_anexa: list[UploadFile]):
+async def upload_and_update_contract_anexa(current_user: Annotated[models.Users, Depends(get_current_active_user)], client_id: int, contract_anexa: list[UploadFile]):
     destination = Path(f'db/{client_id}/Contract_Anexa')
     existing_files = [os.path.join(destination, f) for f in os.listdir(destination)]
     if not os.path.exists(destination):
@@ -491,7 +490,7 @@ async def upload_and_update_contract_anexa(current_user: Annotated[models.User, 
 
 
 @app.put('/upload_factura_avans/{client_id}')
-async def upload_and_update_factura_avans(current_user: Annotated[models.User, Depends(models.get_current_active_user)], client_id: int, factura: list[UploadFile]):
+async def upload_and_update_factura_avans(current_user: Annotated[models.Users, Depends(get_current_active_user)], client_id: int, factura: list[UploadFile]):
     destination = Path(f'db/{client_id}/Factura_Avans')
     existing_files = [os.path.join(destination, f) for f in os.listdir(destination)]
     if not os.path.exists(destination):
@@ -526,7 +525,7 @@ async def upload_and_update_factura_avans(current_user: Annotated[models.User, D
 
 
 @app.put('/upload_dosar_prosumator/{client_id}')
-async def upload_and_update_dosar_prosumator(current_user: Annotated[models.User, Depends(models.get_current_active_user)], client_id: int, dosar: list[UploadFile]):
+async def upload_and_update_dosar_prosumator(current_user: Annotated[models.Users, Depends(get_current_active_user)], client_id: int, dosar: list[UploadFile]):
     destination = Path(f'db/{client_id}/Dosar_Prosumator')
     existing_files = [os.path.join(destination, f) for f in os.listdir(destination)]
     if not os.path.exists(destination):
@@ -560,7 +559,7 @@ async def upload_and_update_dosar_prosumator(current_user: Annotated[models.User
     return client
 
 @app.put('/upload_garantii_client/{client_id}')
-async def upload_and_update_garantii_client(current_user: Annotated[models.User, Depends(models.get_current_active_user)], client_id: int, garantii: list[UploadFile]):
+async def upload_and_update_garantii_client(current_user: Annotated[models.Users, Depends(get_current_active_user)], client_id: int, garantii: list[UploadFile]):
     destination = Path(f'db/{client_id}/Garantii_Client')
     existing_files = [os.path.join(destination, f) for f in os.listdir(destination)]
     if not os.path.exists(destination):
@@ -595,7 +594,7 @@ async def upload_and_update_garantii_client(current_user: Annotated[models.User,
 
 
 @app.get('/certificat_racordare/{client_id}')
-async def download_certificat_de_racordare_by_id(current_user: Annotated[models.User, Depends(models.get_current_active_user)], client_id: int, file_name:str):
+async def download_certificat_de_racordare_by_id(current_user: Annotated[models.Users, Depends(get_current_active_user)], client_id: int, file_name:str):
     db_id_path = os.path.join('db', str(client_id))
     document_path = os.path.join(db_id_path, 'Certificat_Racordare')
     file_path = ''
@@ -615,7 +614,7 @@ async def download_certificat_de_racordare_by_id(current_user: Annotated[models.
 
 
 @app.get('/documente_incarcate/{client_id}')
-async def download_documente_incarcate_by_id(current_user: Annotated[models.User, Depends(models.get_current_active_user)], client_id: int, file_name:str):
+async def download_documente_incarcate_by_id(current_user: Annotated[models.Users, Depends(get_current_active_user)], client_id: int, file_name:str):
     db_id_path = os.path.join('db', str(client_id))
     document_path = os.path.join(db_id_path, 'Documente_Incarcate')
     file_path = ''
@@ -635,7 +634,7 @@ async def download_documente_incarcate_by_id(current_user: Annotated[models.User
 
 
 @app.get('/contract_anexa/{client_id}')
-async def download_contract_anexa_by_id(current_user: Annotated[models.User, Depends(models.get_current_active_user)], client_id: int, file_name:str):
+async def download_contract_anexa_by_id(current_user: Annotated[models.Users, Depends(get_current_active_user)], client_id: int, file_name:str):
     db_id_path = os.path.join('db', str(client_id))
     document_path = os.path.join(db_id_path, 'Contract_Anexa')
     file_path = ''
@@ -655,7 +654,7 @@ async def download_contract_anexa_by_id(current_user: Annotated[models.User, Dep
 
 
 @app.get('/factura_avans/{client_id}')
-async def download_factura_avans_by_id(current_user: Annotated[models.User, Depends(models.get_current_active_user)], client_id: int, file_name:str):
+async def download_factura_avans_by_id(current_user: Annotated[models.Users, Depends(get_current_active_user)], client_id: int, file_name:str):
     db_id_path = os.path.join('db', str(client_id))
     document_path = os.path.join(db_id_path, 'Factura_Avans')
     file_path = ''
@@ -675,7 +674,7 @@ async def download_factura_avans_by_id(current_user: Annotated[models.User, Depe
 
 
 @app.get('/dosar_prosumator/{client_id}')
-async def download_dosar_prosumator_by_id(current_user: Annotated[models.User, Depends(models.get_current_active_user)], client_id: int, file_name:str):
+async def download_dosar_prosumator_by_id(current_user: Annotated[models.Users, Depends(get_current_active_user)], client_id: int, file_name:str):
     db_id_path = os.path.join('db', str(client_id))
     document_path = os.path.join(db_id_path, 'Dosar_Prosumator')
     file_path = ''
@@ -695,7 +694,7 @@ async def download_dosar_prosumator_by_id(current_user: Annotated[models.User, D
 
 
 @app.get('/garantii_client/{client_id}')
-async def download_garantii_client_by_id(current_user: Annotated[models.User, Depends(models.get_current_active_user)], client_id: int, file_name:str):
+async def download_garantii_client_by_id(current_user: Annotated[models.Users, Depends(get_current_active_user)], client_id: int, file_name:str):
     db_id_path = os.path.join('db', str(client_id))
     document_path = os.path.join(db_id_path, 'Garantii_Client')
     file_path = ''
@@ -715,7 +714,7 @@ async def download_garantii_client_by_id(current_user: Annotated[models.User, De
 
 
 @app.get('/serie_inventor/{client_id}')
-async def download_serie_inventor_by_id(current_user: Annotated[models.User, Depends(models.get_current_active_user)], client_id: int, file_name:str):
+async def download_serie_inventor_by_id(current_user: Annotated[models.Users, Depends(get_current_active_user)], client_id: int, file_name:str):
     db_id_path = os.path.join('db', str(client_id))
     document_path = os.path.join(db_id_path, 'Serie_Inventor')
     file_path = ''
@@ -735,7 +734,7 @@ async def download_serie_inventor_by_id(current_user: Annotated[models.User, Dep
 
 
 @app.get('/serie_panouri/{client_id}')
-async def download_serie_panouri_by_id(current_user: Annotated[models.User, Depends(models.get_current_active_user)], client_id: int, file_name:str):
+async def download_serie_panouri_by_id(current_user: Annotated[models.Users, Depends(get_current_active_user)], client_id: int, file_name:str):
     db_id_path = os.path.join('db', str(client_id))
     document_path = os.path.join(db_id_path, 'Serie_Panouri')
     file_path = ''
@@ -755,7 +754,7 @@ async def download_serie_panouri_by_id(current_user: Annotated[models.User, Depe
 
 
 @app.get('/serie_smart_meter/{client_id}')
-async def downloadserie_smart_meter_by_id(current_user: Annotated[models.User, Depends(models.get_current_active_user)], client_id: int, file_name:str):
+async def downloadserie_smart_meter_by_id(current_user: Annotated[models.Users, Depends(get_current_active_user)], client_id: int, file_name:str):
     db_id_path = os.path.join('db', str(client_id))
     document_path = os.path.join(db_id_path, 'Serie_Smart_Meter')
     file_path = ''
