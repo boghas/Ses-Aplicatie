@@ -1,8 +1,9 @@
-fastapi
-uvicorn[standard]
+fastapi[all]==0.109.0
+uvicorn[standard]==0.27.0
+gunicorn==21.2.0
 sqlalchemy
 databases[postgresql]
-psycopg2
+psycopg2-binary
 python-dotenv
 starlette-api
 python-jose[cryptography]

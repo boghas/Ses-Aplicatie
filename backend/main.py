@@ -169,7 +169,6 @@ async def get_current_active_user(
 @app.post('/create_user')
 async def create_user(username: str, password: str):
     hashed_password = get_password_hash(password)
-    print(hashed_password)
     user = Users(username=username, hashed_password=hashed_password)
     user.disabled = False
 
@@ -265,7 +264,6 @@ async def create_new_client(current_user: Annotated[models.Users, Depends(get_cu
         certificat_racordare_nume_fisier = "",
         garantii_client_nume_fisier=""
         )
-    print('inserting into database')
     async with database.transaction():
             with SessionLocal() as session:
                 try:
