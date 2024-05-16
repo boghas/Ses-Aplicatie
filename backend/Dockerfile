@@ -6,13 +6,14 @@ FROM python:3.11.2-slim
 WORKDIR /app
 
 # Copy the backend code into the container
-COPY backend /app
+COPY . /app
+COPY db/ ./app
 
 # Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Expose the port your app runs on
-EXPOSE 8000
+EXPOSE 80
 
 # Command to run the application
 
@@ -22,6 +23,6 @@ EXPOSE 8000
 #RUN adduser -u 5678 --disabled-password --gecos "" appuser && chown -R appuser WORKDIR
 #USER appuser
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "80"]
 # During debugging, this entry point will be overridden. For more information, please refer to https://aka.ms/vscode-docker-python-debug
 # CMD ["gunicorn", "--bind", "0.0.0.0:8000", "-k", "uvicorn.workers.UvicornWorker", "main:app"]

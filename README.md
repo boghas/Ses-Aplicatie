@@ -57,4 +57,18 @@ npm i react-router-dom
 npm i file-saver
 npm i jwt-decode
 npm i bootstrap@5.3.3
+npm i dotenv
 npm start
+json-server react-data-table-component react-router-dom file-saver jwt-decode bootstrap@5.3.3 dotenv
+
+docker build -t my-vite-react-app .
+
+docker run -p 8080:80 my-vite-react-app
+
+docker build -t backend .
+
+docker run -p 80:80 backend
+
+docker-compose up --build
+
+npm install --global serve

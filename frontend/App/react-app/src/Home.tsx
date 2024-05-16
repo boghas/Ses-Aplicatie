@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import axios from 'axios';
 import api from "./api";
 
 interface ClientData {
@@ -11,7 +10,7 @@ const Home: React.FC = () => {
   const [data, setData] = useState<ClientData[]>([]);
 
   useEffect(()=> {
-    api.get<ClientData[]>('http://localhost:8000/')
+    api.get<ClientData[]>(`${import.meta.env.VITE_API_URL}/`)
       .then(res => setData(res.data))
       .catch(err => console.log(err));
   }, []);

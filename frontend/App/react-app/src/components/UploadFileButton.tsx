@@ -1,26 +1,31 @@
 import { useState } from 'react';
 import api from '../api';
-import { useNavigate } from 'react-router-dom';
 
-const UploadButton = ({ client_id, endpoint, file_type}) => {
-  const [selectedFiles, setSelectedFiles] = useState([]);
-  const nav = useNavigate()
+interface UploadButtonProps {
+  client_id: number;
+  endpoint: string;
+  file_type: string;
+}
 
-  const handleFileChange = (e) => {
-    setSelectedFiles(Array.from(e.target.files));
+const UploadButton: React.FC<UploadButtonProps> = ({ client_id, endpoint, file_type }) => {
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setSelectedFiles(Array.from(e.target.files));
+    }
   };
 
   const uploadFile = async () => {
-    if (!selectedFiles) return;
+    if (!selectedFiles.length) return;
 
     const formData = new FormData();
     selectedFiles.forEach(selectedFile => {
       formData.append(file_type, selectedFile);
-    })
-    
+    });
 
     try {
-        const response = await api.put(`http://localhost:8000/${endpoint}/${client_id}`, formData, {
+      const response = await api.put(`${import.meta.env.VITE_API_URL}/${endpoint}/${client_id}`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },

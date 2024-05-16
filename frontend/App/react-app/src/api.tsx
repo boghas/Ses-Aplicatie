@@ -1,13 +1,7 @@
-import axios, { AxiosRequestConfig, AxiosError } from "axios";
+import axios, { InternalAxiosRequestConfig, AxiosError } from "axios";
 import { ACCESS_TOKEN } from "./constants";
 
-// Define the type of response data
-interface ResponseData {
-    // Define the structure of your response data
-    // For example:
-    accessToken: string;
-    // Add other properties as needed
-}
+
 
 const api = axios.create({
     baseURL: import.meta.env.VITE_API_URL as string
@@ -15,7 +9,7 @@ const api = axios.create({
 
 // Request interceptor
 api.interceptors.request.use(
-    (config: AxiosRequestConfig): AxiosRequestConfig => {
+    (config: InternalAxiosRequestConfig): InternalAxiosRequestConfig => {
         const token = localStorage.getItem(ACCESS_TOKEN);
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;

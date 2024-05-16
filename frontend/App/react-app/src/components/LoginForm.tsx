@@ -17,8 +17,7 @@ const LoginForm: React.FC = () => {
     };
 
     console.log('req opt', requestOptions);
-
-    const response = await fetch('http://localhost:8000/token', requestOptions);
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/token`, requestOptions);
     console.log(response);
     const data = await response.json();
     console.log('data', data);
