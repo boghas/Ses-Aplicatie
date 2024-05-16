@@ -17,7 +17,7 @@ const DownloadFileButton: React.FC<DownloadFileButtonProps> = ({ client_id, endp
   
     // Iterate over each filename to download the corresponding file
     filenames.forEach((filename, index) => {
-      const url = `http://localhost:8000/${endpoint}/${client_id}?file_name=${new URLSearchParams(filename).toString()}`;
+      const url = `${import.meta.env.VITE_API_URL}/${endpoint}/${client_id}?file_name=${new URLSearchParams(filename).toString()}`;
       api.get(url, {
         responseType: 'blob',
         data: filename,

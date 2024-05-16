@@ -53,7 +53,7 @@ const Detalii: React.FC = () => {
   const { client_id } = useParams<{ client_id: string }>();
 
   useEffect(()=> {
-    api.get<ClientData>(`http://localhost:8000/client/${client_id}`)
+    api.get<ClientData>(`${import.meta.env.VITE_API_URL}/client/${client_id}`)
       .then(res => setData(res.data))
       .catch(err => console.log(err));
   }, [client_id]);
