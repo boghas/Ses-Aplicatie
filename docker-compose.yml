@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  backend:
+    image: diamses.azurecr.io/backend
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    volumes:
+      - ./backend:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+    networks:
+      - server
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "80"]
+  
+  frontend:
+    image: diamses.azurecr.io/frontend
+    build: 
+      context: .
+      dockerfile: frontend/Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_URL=http://backend:80
+    networks:
+      - server
+    depends_on:
+      - backend
+    expose:
+      - 3000
+
+networks:
+  server:
+    driver: bridge
+
